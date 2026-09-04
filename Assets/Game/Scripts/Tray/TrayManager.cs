@@ -30,7 +30,7 @@ namespace PopSort
 
             if (!HasAnyColumnAnchors()) return;
 
-            TrayColumnData[] columnData = levelData.GenerateTrayColumnsFromGrid(columnAnchors.Length);
+            TrayColumnData[] columnData = levelData.GenerateTrayColumnsFromGrid();
             if (!HasColumnAnchorsFor(columnData.Length)) return;
 
             ClearGeneratedObjects();

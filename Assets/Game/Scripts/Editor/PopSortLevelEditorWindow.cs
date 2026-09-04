@@ -13,6 +13,7 @@ namespace PopSort.EditorTools
         private int gridWidth = 5;
         private int gridHeight = 5;
         private int activeColorId;
+        private int selectedPoolColorIndex;
         private Vector2 scrollPosition;
 
         [MenuItem("Tools/PopSort/Level Editor")]
@@ -79,26 +80,20 @@ namespace PopSort.EditorTools
             levelData.difficulty = newDifficulty;
 
             levelData.beltSpeed = EditorGUILayout.FloatField("Belt Speed", levelData.beltSpeed);
-            levelData.colorCount = Mathf.Max(1, EditorGUILayout.IntField("Color Count", levelData.colorCount));
+            levelData.colorCount = Mathf.Max(0, EditorGUILayout.IntField("Color Count", levelData.colorCount));
             levelData.beltSlotCount = Mathf.Max(1, EditorGUILayout.IntField("Belt Slot Count", levelData.beltSlotCount));
             levelData.slotsPerTray = Mathf.Max(1, EditorGUILayout.IntField("Slots Per Tray", levelData.slotsPerTray));
 
             if (difficultyChanged)
             {
-                ApplyDifficultyPreset();
+                Undo.RecordObject(levelData, "Change Level Difficulty");
+                levelData.difficultyParameters = GetDifficultyParameters(levelData.difficulty);
+                EditorUtility.SetDirty(levelData);
             }
 
-            using (new EditorGUILayout.HorizontalScope())
+            if (GUILayout.Button("Generate Level"))
             {
-                if (GUILayout.Button("Apply Difficulty Preset"))
-                {
-                    ApplyDifficultyPreset();
-                }
-
-                if (GUILayout.Button("Randomize Level"))
-                {
-                    GenerateRandomLevel();
-                }
+                GenerateLevel();
             }
 
             EnsurePaletteSize();
@@ -108,6 +103,28 @@ namespace PopSort.EditorTools
         private void DrawPaletteSection()
         {
             EditorGUILayout.LabelField("Palette", EditorStyles.boldLabel);
+            ColorConfigPool colorPool = levelData.colorConfigPool != null
+                ? levelData.colorConfigPool
+                : FindColorConfigPool();
+            if (colorPool != null)
+            {
+                string[] colorNames = GetColorNames(colorPool);
+                int newSelection = EditorGUILayout.Popup("Add Color", selectedPoolColorIndex, colorNames);
+                if (newSelection != selectedPoolColorIndex)
+                {
+                    selectedPoolColorIndex = newSelection;
+                    if (selectedPoolColorIndex > 0)
+                    {
+                        AddColorFromPool(colorPool, selectedPoolColorIndex - 1);
+                    }
+                    selectedPoolColorIndex = 0;
+                }
+            }
+            else
+            {
+                EditorGUILayout.HelpBox("Create a Color Config Pool to add named colors.", MessageType.Info);
+            }
+
             EnsurePaletteSize();
 
             using (new EditorGUILayout.HorizontalScope())
@@ -124,6 +141,100 @@ namespace PopSort.EditorTools
                     }
                 }
             }
+
+            using (new EditorGUI.DisabledScope(levelData.colorCount == 0))
+            {
+                if (GUILayout.Button("Remove Last Color"))
+                {
+                    RemoveLastColor();
+                }
+            }
+        }
+
+        private void RemoveLastColor()
+        {
+            int colorId = levelData.colorCount - 1;
+            if (IsColorUsed(colorId))
+            {
+                EditorUtility.DisplayDialog(
+                    "Color In Use",
+                    $"Color {colorId} is used by one or more grid cells. Clear those cells before removing it.",
+                    "OK");
+                return;
+            }
+
+            Undo.RecordObject(levelData, "Remove Color From Level Palette");
+            levelData.colorCount = Mathf.Max(0, colorId);
+            Color[] resizedPalette = new Color[levelData.colorCount];
+            if (levelData.colorPalette != null)
+            {
+                for (int i = 0; i < resizedPalette.Length && i < levelData.colorPalette.Length; i++)
+                {
+                    resizedPalette[i] = levelData.colorPalette[i];
+                }
+            }
+
+            levelData.colorPalette = resizedPalette;
+            activeColorId = Mathf.Clamp(activeColorId, 0, levelData.colorCount - 1);
+            EditorUtility.SetDirty(levelData);
+        }
+
+        private bool IsColorUsed(int colorId)
+        {
+            if (levelData.rows == null) return false;
+
+            foreach (GridRow row in levelData.rows)
+            {
+                if (row?.cells == null) continue;
+                foreach (GridCell cell in row.cells)
+                {
+                    if (cell.enabled && cell.colorId == colorId) return true;
+                }
+            }
+
+            return false;
+        }
+
+        private void AddColorFromPool(ColorConfigPool colorPool, int colorIndex)
+        {
+            if (colorPool.colors == null || colorIndex < 0 || colorIndex >= colorPool.colors.Count) return;
+
+            ColorConfig config = colorPool.colors[colorIndex];
+            if (config == null || config.id < 0) return;
+
+            Undo.RecordObject(levelData, "Add Color To Level Palette");
+            levelData.colorConfigPool = colorPool;
+            levelData.colorCount = Mathf.Max(levelData.colorCount, config.id + 1);
+            EnsurePaletteSize();
+            levelData.colorPalette[config.id] = config.color;
+            activeColorId = config.id;
+            EditorUtility.SetDirty(levelData);
+        }
+
+        private static string[] GetColorNames(ColorConfigPool colorPool)
+        {
+            if (colorPool.colors == null) return new string[0];
+
+            string[] names = new string[colorPool.colors.Count + 1];
+            names[0] = "Select a color...";
+            for (int i = 0; i < colorPool.colors.Count; i++)
+            {
+                ColorConfig config = colorPool.colors[i];
+                names[i + 1] = config == null
+                    ? "Missing Color"
+                    : $"{config.id}: {config.displayName}";
+            }
+
+            return names;
+        }
+
+        private static ColorConfigPool FindColorConfigPool()
+        {
+            string[] guids = AssetDatabase.FindAssets("t:ColorConfigPool");
+            if (guids.Length == 0) return null;
+
+            string path = AssetDatabase.GUIDToAssetPath(guids[0]);
+            return AssetDatabase.LoadAssetAtPath<ColorConfigPool>(path);
         }
 
         private void DrawGridSection()
@@ -177,7 +288,9 @@ namespace PopSort.EditorTools
         {
             GridCell cell = levelData.rows[y].cells[x];
             Color oldColor = GUI.backgroundColor;
-            GUI.backgroundColor = cell.enabled ? levelData.GetColor(Mathf.Clamp(cell.colorId, 0, levelData.colorPalette.Length - 1)) : Color.gray;
+            GUI.backgroundColor = cell.enabled && levelData.colorPalette != null && levelData.colorPalette.Length > 0
+                ? levelData.GetColor(Mathf.Clamp(cell.colorId, 0, levelData.colorPalette.Length - 1))
+                : Color.gray;
 
             Rect rect = GUILayoutUtility.GetRect(CellSize, CellSize, GUILayout.Width(CellSize), GUILayout.Height(CellSize));
             if (GUI.Button(rect, cell.enabled ? cell.colorId.ToString() : ""))
@@ -205,13 +318,6 @@ namespace PopSort.EditorTools
         private void DrawGeneratedTraySection()
         {
             EditorGUILayout.LabelField("Generated Trays", EditorStyles.boldLabel);
-
-            if (GUILayout.Button("Generate Trays From Grid Counts"))
-            {
-                Undo.RecordObject(levelData, "Generate Trays From Grid");
-                levelData.GenerateTrayColumnsFromGrid();
-                EditorUtility.SetDirty(levelData);
-            }
 
             int[] counts = levelData.CountBallsByColor();
             int trayCapacity = Mathf.Max(levelData.slotsPerTray, 1);
@@ -263,53 +369,58 @@ namespace PopSort.EditorTools
             AssetDatabase.Refresh();
 
             levelData = newLevel;
-            ApplyDifficultyPreset();
+            levelData.difficultyParameters = GetDifficultyParameters(levelData.difficulty);
+            GenerateLevel();
             SaveLevel();
         }
 
-        private void ApplyDifficultyPreset()
+        private void GenerateLevel()
         {
-            Undo.RecordObject(levelData, "Apply Difficulty Preset");
+            Undo.RecordObject(levelData, "Generate Level");
+            levelData.difficultyParameters = GetDifficultyParameters(levelData.difficulty);
+            GenerateRandomLevel();
+        }
 
-            switch (levelData.difficulty)
+        private DifficultyParameters GetDifficultyParameters(LevelDifficulty difficulty)
+        {
+            DifficultyParameters parameters = new DifficultyParameters();
+            switch (difficulty)
             {
                 case LevelDifficulty.Easy:
-                    gridWidth = 4;
-                    gridHeight = 4;
-                    levelData.colorCount = 2;
-                    levelData.beltSpeed = 0.12f;
-                    levelData.beltSlotCount = 10;
-                    levelData.slotsPerTray = 3;
+                    parameters.maxCanonicalConveyorPressure = 0.25f;
+                    parameters.forcedReliefThreshold = 0.15f;
+                    parameters.usefulBallUnlockDepth = 1;
+                    parameters.colourRepetition = 1f;
+                    parameters.verticalColourClustering = 1f;
+                    parameters.preferredTrayColumnCount = 4;
                     break;
                 case LevelDifficulty.Medium:
-                    gridWidth = 5;
-                    gridHeight = 5;
-                    levelData.colorCount = 3;
-                    levelData.beltSpeed = 0.18f;
-                    levelData.beltSlotCount = 8;
-                    levelData.slotsPerTray = 3;
+                    parameters.maxCanonicalConveyorPressure = 0.4f;
+                    parameters.forcedReliefThreshold = 0.3f;
+                    parameters.usefulBallUnlockDepth = 2;
+                    parameters.colourRepetition = 0.65f;
+                    parameters.verticalColourClustering = 0.65f;
+                    parameters.preferredTrayColumnCount = 3;
                     break;
                 case LevelDifficulty.Hard:
-                    gridWidth = 6;
-                    gridHeight = 6;
-                    levelData.colorCount = 4;
-                    levelData.beltSpeed = 0.26f;
-                    levelData.beltSlotCount = 7;
-                    levelData.slotsPerTray = 3;
+                    parameters.maxCanonicalConveyorPressure = 0.6f;
+                    parameters.forcedReliefThreshold = 0.5f;
+                    parameters.usefulBallUnlockDepth = 3;
+                    parameters.colourRepetition = 0.35f;
+                    parameters.verticalColourClustering = 0.35f;
+                    parameters.preferredTrayColumnCount = 2;
                     break;
-                case LevelDifficulty.Expert:
-                    gridWidth = 7;
-                    gridHeight = 7;
-                    levelData.colorCount = 5;
-                    levelData.beltSpeed = 0.34f;
-                    levelData.beltSlotCount = 6;
-                    levelData.slotsPerTray = 3;
+                case LevelDifficulty.SuperHard:
+                    parameters.maxCanonicalConveyorPressure = 0.75f;
+                    parameters.forcedReliefThreshold = 0.65f;
+                    parameters.usefulBallUnlockDepth = 4;
+                    parameters.colourRepetition = 0.1f;
+                    parameters.verticalColourClustering = 0.1f;
+                    parameters.preferredTrayColumnCount = 2;
                     break;
             }
 
-            EnsurePaletteSize();
-            GenerateRandomLevel();
-            EditorUtility.SetDirty(levelData);
+            return parameters;
         }
 
         private void GenerateRandomLevel()
@@ -317,19 +428,22 @@ namespace PopSort.EditorTools
             Undo.RecordObject(levelData, "Generate Random Level");
             ResizeGrid(gridWidth, gridHeight);
 
+            if (levelData.colorCount == 0)
+            {
+                ClearGrid();
+                levelData.trayColumns = null;
+                EditorUtility.SetDirty(levelData);
+                return;
+            }
+
             int trayCapacity = Mathf.Max(levelData.slotsPerTray, 1);
             int totalCells = gridWidth * gridHeight;
-            int totalGroups = totalCells / trayCapacity;
             int colorCount = Mathf.Max(levelData.colorCount, 1);
 
             List<int> ballColors = new List<int>();
-            for (int groupIndex = 0; groupIndex < totalGroups; groupIndex++)
+            for (int colorBallIndex = 0; colorBallIndex < totalCells; colorBallIndex++)
             {
-                int colorId = groupIndex % colorCount;
-                for (int i = 0; i < trayCapacity; i++)
-                {
-                    ballColors.Add(colorId);
-                }
+                ballColors.Add((colorBallIndex / trayCapacity) % colorCount);
             }
 
             for (int i = ballColors.Count - 1; i > 0; i--)
@@ -349,7 +463,7 @@ namespace PopSort.EditorTools
                 }
             }
 
-            levelData.GenerateTrayColumnsFromGrid();
+            levelData.GenerateTrayColumnsFromGrid(levelData.difficultyParameters.preferredTrayColumnCount);
             EditorUtility.SetDirty(levelData);
         }
 
@@ -419,7 +533,7 @@ namespace PopSort.EditorTools
 
         private void EnsurePaletteSize()
         {
-            int size = Mathf.Max(levelData.colorCount, 1);
+            int size = Mathf.Max(levelData.colorCount, 0);
             Color[] oldPalette = levelData.colorPalette;
             if (oldPalette != null && oldPalette.Length == size) return;
 
@@ -436,7 +550,7 @@ namespace PopSort.EditorTools
                 }
             }
 
-            activeColorId = Mathf.Clamp(activeColorId, 0, size - 1);
+            activeColorId = size == 0 ? 0 : Mathf.Clamp(activeColorId, 0, size - 1);
         }
 
         private void SaveLevel()

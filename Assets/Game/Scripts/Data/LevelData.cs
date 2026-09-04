@@ -9,7 +9,18 @@ namespace PopSort
         Easy,
         Medium,
         Hard,
-        Expert
+        SuperHard
+    }
+
+    [Serializable]
+    public class DifficultyParameters
+    {
+        [Range(0f, 1f)] public float maxCanonicalConveyorPressure = 0.25f;
+        [Range(0f, 1f)] public float forcedReliefThreshold = 0.15f;
+        public int usefulBallUnlockDepth = 1;
+        [Range(0f, 1f)] public float colourRepetition = 1f;
+        [Range(0f, 1f)] public float verticalColourClustering = 1f;
+        [Range(2, 4)] public int preferredTrayColumnCount = 4;
     }
 
     [Serializable]
@@ -51,19 +62,29 @@ namespace PopSort
 
         public LevelDifficulty difficulty;
         public GridRow[] rows;
+        public ColorConfigPool colorConfigPool;
         public Color[] colorPalette;
         public int colorCount = 4;
         public float beltSpeed = 0.2f;
         public int slotsPerTray = 3;
         public int beltSlotCount = 7;
         public TrayColumnData[] trayColumns;
+        public DifficultyParameters difficultyParameters = new DifficultyParameters();
 
         public int Height => rows?.Length ?? 0;
         public int Width => Height > 0 ? rows[0].cells.Length : 0;
 
         public GridCell GetCell(int x, int y) => rows[y].cells[x];
 
-        public Color GetColor(int colorId) => colorPalette[colorId];
+        public Color GetColor(int colorId)
+        {
+            if (colorConfigPool != null && colorConfigPool.TryGet(colorId, out ColorConfig config))
+            {
+                return config.color;
+            }
+
+            return colorPalette[colorId];
+        }
 
         public int[] CountBallsByColor()
         {
@@ -86,28 +107,54 @@ namespace PopSort
             return counts;
         }
 
+        public int TotalBallCount()
+        {
+            int total = 0;
+            foreach (int count in CountBallsByColor()) total += count;
+            return total;
+        }
+
+        public int TotalTrayCapacity()
+        {
+            if (trayColumns == null) return 0;
+
+            int total = 0;
+            foreach (TrayColumnData column in trayColumns)
+            {
+                if (column?.trays == null) continue;
+                foreach (TrayData tray in column.trays) total += Mathf.Max(tray.capacity, 0);
+            }
+
+            return total;
+        }
+
+        public bool HasExactTrayCapacity() => TotalTrayCapacity() == TotalBallCount();
+
         public TrayColumnData[] GenerateTrayColumnsFromGrid()
         {
-            return GenerateTrayColumnsFromGrid(DefaultTrayColumnCount);
+            return GenerateTrayColumnsFromGrid(GetPreferredTrayColumnCount());
         }
 
         public TrayColumnData[] GenerateTrayColumnsFromGrid(int columnCount)
         {
             int[] ballCounts = CountBallsByColor();
             int trayCapacity = Mathf.Max(slotsPerTray, 1);
-            int clampedColumnCount = Mathf.Max(columnCount, 1);
-            List<TrayData> generatedTrays = new List<TrayData>();
+            int clampedColumnCount = Mathf.Clamp(columnCount, 2, 4);
+            List<TrayData>[] traysByColor = new List<TrayData>[ballCounts.Length];
 
             for (int colorId = 0; colorId < ballCounts.Length; colorId++)
             {
+                traysByColor[colorId] = new List<TrayData>();
                 int trayCount = Mathf.CeilToInt(ballCounts[colorId] / (float)trayCapacity);
-                for (int i = 0; i < trayCount; i++)
+                for (int trayIndex = 0; trayIndex < trayCount; trayIndex++)
                 {
-                    generatedTrays.Add(new TrayData(colorId, trayCapacity));
+                    int remaining = ballCounts[colorId] - trayIndex * trayCapacity;
+                    traysByColor[colorId].Add(new TrayData(colorId, Mathf.Min(trayCapacity, remaining)));
                 }
             }
 
-            int usedColumnCount = Mathf.Clamp(generatedTrays.Count, 1, clampedColumnCount);
+            List<TrayData> generatedTrays = BuildTrayOrder(traysByColor, BuildGridColourOrder());
+            int usedColumnCount = clampedColumnCount;
             List<TrayData>[] columnTrays = new List<TrayData>[usedColumnCount];
 
             for (int columnIndex = 0; columnIndex < columnTrays.Length; columnIndex++)
@@ -130,5 +177,141 @@ namespace PopSort
             trayColumns = generatedColumns;
             return trayColumns;
         }
+
+        private List<TrayData> BuildTrayOrder(List<TrayData>[] traysByColor, List<int> gridColourOrder)
+        {
+            List<TrayData> orderedTrays = new List<TrayData>();
+            int[] nextTrayByColor = new int[traysByColor.Length];
+            int previousColorId = -1;
+            int totalTrays = CountTrays(traysByColor);
+
+            while (orderedTrays.Count < totalTrays)
+            {
+                int selectedColorId = SelectNextTrayColor(traysByColor, nextTrayByColor, gridColourOrder, previousColorId);
+                if (selectedColorId < 0) break;
+
+                orderedTrays.Add(traysByColor[selectedColorId][nextTrayByColor[selectedColorId]++]);
+                previousColorId = selectedColorId;
+            }
+
+            return orderedTrays;
+        }
+
+        private int SelectNextTrayColor(
+            List<TrayData>[] traysByColor,
+            int[] nextTrayByColor,
+            List<int> gridColourOrder,
+            int previousColorId)
+        {
+            int selectedColorId = -1;
+            float selectedScore = float.MaxValue;
+            float interleaveAmount = GetTrayInterleaveAmount();
+            int targetOffset = Mathf.RoundToInt(Mathf.Lerp(0f, GetUsefulBallUnlockDepth() - 1, interleaveAmount));
+
+            for (int colorId = 0; colorId < traysByColor.Length; colorId++)
+            {
+                if (nextTrayByColor[colorId] >= traysByColor[colorId].Count) continue;
+
+                int alignmentIndex = FindColourIndex(gridColourOrder, colorId);
+                float alignmentDistance = alignmentIndex < 0 ? gridColourOrder.Count : alignmentIndex;
+                float score = Mathf.Abs(alignmentDistance - targetOffset);
+                if (colorId == previousColorId) score += (1f - GetVerticalColourClustering()) * 2f;
+
+                if (score < selectedScore)
+                {
+                    selectedScore = score;
+                    selectedColorId = colorId;
+                }
+            }
+
+            return selectedColorId;
+        }
+
+        private List<int> BuildGridColourOrder()
+        {
+            List<int> colourOrder = new List<int>();
+            if (rows == null || rows.Length == 0) return colourOrder;
+
+            for (int x = 0; x < Width; x++)
+            {
+                for (int y = rows.Length - 1; y >= 0; y--)
+                {
+                    if (rows[y]?.cells == null || x >= rows[y].cells.Length) continue;
+                    int colorId = rows[y].cells[x].colorId;
+                    if (rows[y].cells[x].enabled && !colourOrder.Contains(colorId)) colourOrder.Add(colorId);
+                }
+            }
+
+            return colourOrder;
+        }
+
+        private static int FindColourIndex(List<int> colourOrder, int colorId)
+        {
+            for (int i = 0; i < colourOrder.Count; i++)
+            {
+                if (colourOrder[i] == colorId) return i;
+            }
+
+            return -1;
+        }
+
+        private static int CountTrays(List<TrayData>[] traysByColor)
+        {
+            int count = 0;
+            foreach (List<TrayData> colorTrays in traysByColor) count += colorTrays.Count;
+            return count;
+        }
+
+        private float GetTrayInterleaveAmount()
+        {
+            if (difficultyParameters == null)
+            {
+                return 1f - GetColourRepetition();
+            }
+
+            float pressure = Mathf.Clamp01(difficultyParameters.maxCanonicalConveyorPressure);
+            float reliefDelay = Mathf.Clamp01(difficultyParameters.forcedReliefThreshold);
+            float unlockDepth = Mathf.InverseLerp(1f, 4f, Mathf.Max(1, difficultyParameters.usefulBallUnlockDepth));
+            float lowVerticalClustering = 1f - Mathf.Clamp01(difficultyParameters.verticalColourClustering);
+            float lowColourRepetition = 1f - GetColourRepetition();
+
+            return Mathf.Clamp01(Mathf.Max(
+                pressure,
+                reliefDelay,
+                unlockDepth,
+                lowVerticalClustering,
+                lowColourRepetition));
+        }
+
+        private int GetPreferredTrayColumnCount()
+        {
+            if (difficultyParameters != null)
+            {
+                return Mathf.Clamp(difficultyParameters.preferredTrayColumnCount, 2, 4);
+            }
+
+            return difficulty == LevelDifficulty.SuperHard || difficulty == LevelDifficulty.Hard ? 2 : 4;
+        }
+
+        private int GetUsefulBallUnlockDepth()
+        {
+            return difficultyParameters == null
+                ? 1
+                : Mathf.Max(1, difficultyParameters.usefulBallUnlockDepth);
+        }
+
+        private float GetVerticalColourClustering()
+        {
+            return difficultyParameters == null
+                ? 1f
+                : Mathf.Clamp01(difficultyParameters.verticalColourClustering);
+        }
+
+        private float GetColourRepetition()
+        {
+            if (difficultyParameters != null) return Mathf.Clamp01(difficultyParameters.colourRepetition);
+            return difficulty == LevelDifficulty.Easy ? 1f : difficulty == LevelDifficulty.Medium ? 0.65f : 0.1f;
+        }
+
     }
 }

@@ -92,6 +92,7 @@ MonoBehaviour:
       colorId: 0
     - enabled: 1
       colorId: 0
+  colorConfigPool: {fileID: 0}
   colorPalette:
   - {r: 1, g: 0.14999998, b: 0.14999998, a: 1}
   - {r: 0.14999998, g: 1, b: 1, a: 1}
@@ -128,3 +129,10 @@ MonoBehaviour:
       capacity: 3
     - colorId: 1
       capacity: 3
+  difficultyParameters:
+    maxCanonicalConveyorPressure: 0.25
+    forcedReliefThreshold: 0.15
+    usefulBallUnlockDepth: 1
+    colourRepetition: 1
+    verticalColourClustering: 1
+    preferredTrayColumnCount: 4

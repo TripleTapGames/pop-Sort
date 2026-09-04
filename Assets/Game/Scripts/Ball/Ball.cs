@@ -43,7 +43,7 @@ namespace PopSort
 
         public void Pop()
         {
-            if (State != BallState.InGrid) return;
+            if (State != BallState.InGrid || HasBallBelow()) return;
 
             State = BallState.Falling;
             col.isTrigger = false;
@@ -51,6 +51,26 @@ namespace PopSort
             rb.bodyType = RigidbodyType2D.Dynamic;
             rb.gravityScale = 1f;
             onPopped?.Invoke(this);
+        }
+
+        private bool HasBallBelow()
+        {
+            float radius = col != null ? col.radius * transform.lossyScale.y : 0.1f;
+            Vector2 origin = (Vector2)transform.position + Vector2.down * (radius + 0.01f);
+            RaycastHit2D[] hits = Physics2D.RaycastAll(origin, Vector2.down, Mathf.Infinity);
+
+            foreach (RaycastHit2D hit in hits)
+            {
+                if (hit.collider == null || hit.collider == col) continue;
+
+                Ball ballBelow = hit.collider.GetComponent<Ball>();
+                if (ballBelow != null && ballBelow.State == BallState.InGrid)
+                {
+                    return true;
+                }
+            }
+
+            return false;
         }
 
         // Stops physics once queue movement takes over so belt positioning is exact.
