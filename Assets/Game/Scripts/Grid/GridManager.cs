@@ -6,7 +6,7 @@ namespace PopSort
 {
     public class GridManager : MonoBehaviour
     {
-        [SerializeField] private LevelData levelData;
+        private LevelData levelData;
         [SerializeField] private BallPool ballPool;
         [SerializeField] private Transform gridOrigin;
         [SerializeField] private float cellSize = 1f;
@@ -17,6 +17,28 @@ namespace PopSort
 
         private void Start()
         {
+            // GameManager supplies the selected level.
+        }
+
+        public void SetLevelData(LevelData newLevelData)
+        {
+            levelData = newLevelData;
+        }
+
+        public void ClearGrid()
+        {
+            foreach (Ball ball in aliveBalls)
+            {
+                if (ball != null) ballPool.Release(ball);
+            }
+
+            aliveBalls.Clear();
+        }
+
+        public void SpawnGridFromLevelData(LevelData newLevelData)
+        {
+            ClearGrid();
+            SetLevelData(newLevelData);
             SpawnGrid();
         }
 

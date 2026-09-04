@@ -22,6 +22,8 @@ namespace PopSort
             CacheLayoutPositions();
         }
 
+        public bool IsComplete => activeIndex >= (traySlots?.Length ?? 0);
+
         public bool CanAccept(int colorId) =>
             activeIndex < traySlots.Length &&
             traySlots[activeIndex].ColorId == colorId &&

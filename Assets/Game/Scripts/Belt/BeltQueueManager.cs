@@ -7,25 +7,65 @@ namespace PopSort
 {
     public class BeltQueueManager : MonoBehaviour
     {
-        [SerializeField] private LevelData levelData;
+        private LevelData levelData;
+        [SerializeField] private BallPool ballPool;
         [SerializeField] private TrayManager trayManager;
         [SerializeField] private SplineConveyorBelt2D splineConveyorBelt;
         [SerializeField] private Transform trayPickupPoint;
         [SerializeField] private float acceptDistanceThreshold = 0.05f;
+        [SerializeField] private float noMatchFailDelay = 0.75f;
 
         public event Action OnOverflow;
 
-        public int QueueCount => queue.Count;
+        public int QueueCount => queue.Count + pendingBalls.Count;
+
+        public void SetLevelData(LevelData newLevelData)
+        {
+            levelData = newLevelData;
+            if (splineConveyorBelt != null)
+            {
+                splineConveyorBelt.SetSlotCount(levelData.beltSlotCount);
+                splineConveyorBelt.SetSpeed(levelData.beltSpeed);
+                splineConveyorBelt.SetMoving(true);
+            }
+        }
+
+        public void SetBeltMoving(bool shouldMove)
+        {
+            if (splineConveyorBelt != null) splineConveyorBelt.SetMoving(shouldMove);
+        }
+
+        public void ClearQueue()
+        {
+            foreach (QueuedBall queuedBall in queue)
+            {
+                if (queuedBall.Ball == null) continue;
+                if (splineConveyorBelt != null)
+                {
+                    splineConveyorBelt.DetachObject(queuedBall.Ball.transform);
+                }
+                if (ballPool != null) ballPool.Release(queuedBall.Ball);
+            }
+
+            foreach (Ball pendingBall in pendingBalls)
+            {
+                if (pendingBall != null && ballPool != null) ballPool.Release(pendingBall);
+            }
+
+            queue.Clear();
+            pendingBalls.Clear();
+            occupiedSplineSlots.Clear();
+            noMatchElapsedTime = 0f;
+        }
 
         private readonly List<QueuedBall> queue = new List<QueuedBall>();
+        private readonly List<Ball> pendingBalls = new List<Ball>();
         private readonly HashSet<int> occupiedSplineSlots = new HashSet<int>();
+        private float noMatchElapsedTime;
 
         private void Start()
         {
-            if (levelData != null && splineConveyorBelt != null)
-            {
-                splineConveyorBelt.SetSpeed(levelData.beltSpeed);
-            }
+            // GameManager supplies the selected level.
         }
 
         public void HandleBallLanded(Ball ball)
@@ -43,20 +83,24 @@ namespace PopSort
         private void Update()
         {
             TryCollectBallsAtPickup();
+            TryAddPendingBalls();
+            CheckForFullBeltDeadlock();
         }
 
         private void AddBallToSplineBelt(Ball ball)
         {
             if (queue.Count >= GetBeltCapacity())
             {
-                OnOverflow?.Invoke();
+                ball.SetQueued();
+                pendingBalls.Add(ball);
                 return;
             }
 
             int slotIndex = FindNearestFreeSplineSlot(ball.transform.position);
             if (slotIndex < 0)
             {
-                OnOverflow?.Invoke();
+                ball.SetQueued();
+                pendingBalls.Add(ball);
                 return;
             }
 
@@ -64,6 +108,21 @@ namespace PopSort
             splineConveyorBelt.AttachObjectToSlot(ball.transform, slotIndex);
             occupiedSplineSlots.Add(slotIndex);
             queue.Add(new QueuedBall(ball, slotIndex));
+        }
+
+        private void TryAddPendingBalls()
+        {
+            while (pendingBalls.Count > 0 && queue.Count < GetBeltCapacity())
+            {
+                Ball pendingBall = pendingBalls[0];
+                int slotIndex = FindNearestFreeSplineSlot(pendingBall.transform.position);
+                if (slotIndex < 0) return;
+
+                pendingBalls.RemoveAt(0);
+                splineConveyorBelt.AttachObjectToSlot(pendingBall.transform, slotIndex);
+                occupiedSplineSlots.Add(slotIndex);
+                queue.Add(new QueuedBall(pendingBall, slotIndex));
+            }
         }
 
         private int FindNearestFreeSplineSlot(Vector3 worldPosition)
@@ -94,6 +153,33 @@ namespace PopSort
             return Mathf.Min(Mathf.Max(levelData.beltSlotCount, 1), splineSlotCount);
         }
 
+        private void CheckForFullBeltDeadlock()
+        {
+            if (queue.Count < GetBeltCapacity() || HasQueuedBallMatchingActiveTray())
+            {
+                noMatchElapsedTime = 0f;
+                return;
+            }
+
+            noMatchElapsedTime += Time.deltaTime;
+            if (noMatchElapsedTime < noMatchFailDelay) return;
+
+            noMatchElapsedTime = 0f;
+            OnOverflow?.Invoke();
+        }
+
+        private bool HasQueuedBallMatchingActiveTray()
+        {
+            if (trayManager == null) return false;
+
+            foreach (QueuedBall queuedBall in queue)
+            {
+                if (queuedBall.Ball != null && trayManager.CanAcceptColor(queuedBall.Ball.ColorId)) return true;
+            }
+
+            return false;
+        }
+
         private void TryCollectBallsAtPickup()
         {
             if (queue.Count == 0) return;
@@ -104,7 +190,10 @@ namespace PopSort
                 float distance = Vector3.Distance(queuedBall.Ball.transform.position, trayPickupPoint.position);
                 if (distance > acceptDistanceThreshold) continue;
 
-                if (!trayManager.TryAcceptBall(queuedBall.Ball)) continue;
+                if (!trayManager.TryAcceptBall(queuedBall.Ball))
+                {
+                    continue;
+                }
 
                 splineConveyorBelt.DetachObject(queuedBall.Ball.transform);
                 occupiedSplineSlots.Remove(queuedBall.SplineSlotIndex);

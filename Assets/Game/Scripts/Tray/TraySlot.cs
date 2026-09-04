@@ -15,6 +15,7 @@ namespace PopSort
 
         public int ColorId => colorId;
         public bool HasSpace => placedBalls.Count < capacity;
+        public bool IsComplete => placedBalls.Count >= capacity;
         public float LastIntakeMoveTime { get; private set; }
 
         private readonly List<Ball> placedBalls = new List<Ball>();

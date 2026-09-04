@@ -44,6 +44,8 @@ namespace PaperSort.Game
         [Tooltip("Direction of movement: Positive = Forward, Negative = Reverse.")]
         [SerializeField] private bool moveReverse = false;
 
+        private bool isMoving = true;
+
         [Header("Editor Preview Toggle")]
         [Tooltip("Toggle to show/hide roller sprites preview in Editor mode. Uncheck to view only the raw Spline path.")]
         [SerializeField] private bool showEditorPreview = true;
@@ -70,6 +72,20 @@ namespace PaperSort.Game
         public void SetSpeed(float speed)
         {
             this.speed = Mathf.Max(0f, speed);
+        }
+
+        public void SetMoving(bool shouldMove)
+        {
+            isMoving = shouldMove;
+        }
+
+        public void SetSlotCount(int slotCount)
+        {
+            int clampedSlotCount = Mathf.Max(slotCount, 1);
+            if (totalElements == clampedSlotCount && elementTransforms.Count == clampedSlotCount) return;
+
+            totalElements = clampedSlotCount;
+            SetupElements();
         }
 
         /// <summary>
@@ -265,6 +281,8 @@ namespace PaperSort.Game
                     SetupElements();
                     return;
                 }
+
+                if (!isMoving) return;
 
                 float speedDirection = moveReverse ? -speed : speed;
                 UpdatePositions(speedDirection * Time.deltaTime);

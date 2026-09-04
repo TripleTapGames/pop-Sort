@@ -5,22 +5,18 @@ namespace PopSort
 {
     public class TrayManager : MonoBehaviour
     {
-        [SerializeField] private LevelData levelData;
+        private LevelData levelData;
         [SerializeField] private BallPool ballPool;
         [SerializeField] private TraySlot traySlotPrefab;
         [SerializeField] private Transform[] columnAnchors;
         [SerializeField] private float generatedRowSpacing = 1.1f;
-        [SerializeField] private bool generateFromLevelOnStart = true;
         [SerializeField] private TrayColumn[] trayColumns;
 
         private readonly List<GameObject> generatedObjects = new List<GameObject>();
 
         private void Start()
         {
-            if (generateFromLevelOnStart)
-            {
-                GenerateFromLevel();
-            }
+            // GameManager supplies the selected level.
         }
 
         [ContextMenu("Generate From Level")]
@@ -80,6 +76,48 @@ namespace PopSort
             }
 
             return false;
+        }
+
+        public void SetLevelData(LevelData newLevelData)
+        {
+            levelData = newLevelData;
+        }
+
+        public bool AreAllTraysComplete()
+        {
+            if (trayColumns == null || trayColumns.Length == 0) return false;
+
+            foreach (TrayColumn column in trayColumns)
+            {
+                if (column == null || !column.IsComplete) return false;
+            }
+
+            return true;
+        }
+
+        public void ClearGeneratedTrays()
+        {
+            if (trayColumns != null)
+            {
+                foreach (TrayColumn column in trayColumns)
+                {
+                    if (column == null) continue;
+                    foreach (TraySlot slot in column.GetComponentsInChildren<TraySlot>(true))
+                    {
+                        slot.ClearBalls();
+                    }
+                }
+            }
+
+            ClearGeneratedObjects();
+            trayColumns = null;
+        }
+
+        public void LoadLevelData(LevelData newLevelData)
+        {
+            ClearGeneratedTrays();
+            SetLevelData(newLevelData);
+            GenerateFromLevel();
         }
 
         private Vector3 GetColumnPosition(int columnIndex)
@@ -157,6 +195,15 @@ namespace PopSort
             }
 
             return true;
+        }
+        public bool CanAcceptColor(int colorId)
+        {
+            foreach (TrayColumn column in trayColumns)
+            {
+                if (column != null && column.CanAccept(colorId)) return true;
+            }
+
+            return false;
         }
     }
 }

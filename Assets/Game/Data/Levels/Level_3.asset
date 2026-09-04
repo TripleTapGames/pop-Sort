@@ -16,120 +16,90 @@ MonoBehaviour:
   rows:
   - cells:
     - enabled: 1
+      colorId: 0
+    - enabled: 1
       colorId: 1
-    - enabled: 1
-      colorId: 2
-    - enabled: 1
-      colorId: 3
     - enabled: 1
       colorId: 1
     - enabled: 1
       colorId: 0
     - enabled: 1
-      colorId: 2
-  - cells:
-    - enabled: 1
-      colorId: 3
-    - enabled: 1
-      colorId: 1
-    - enabled: 1
       colorId: 0
-    - enabled: 1
-      colorId: 1
-    - enabled: 1
-      colorId: 2
-    - enabled: 1
-      colorId: 2
   - cells:
     - enabled: 1
       colorId: 2
     - enabled: 1
-      colorId: 3
+      colorId: 1
     - enabled: 1
-      colorId: 3
-    - enabled: 1
-      colorId: 3
+      colorId: 2
     - enabled: 1
       colorId: 1
     - enabled: 1
-      colorId: 1
+      colorId: 2
   - cells:
     - enabled: 1
       colorId: 1
     - enabled: 1
       colorId: 2
     - enabled: 1
-      colorId: 2
-    - enabled: 1
-      colorId: 2
-    - enabled: 1
-      colorId: 0
-    - enabled: 1
-      colorId: 2
-  - cells:
-    - enabled: 1
-      colorId: 0
-    - enabled: 1
-      colorId: 0
-    - enabled: 1
-      colorId: 3
-    - enabled: 1
-      colorId: 3
-    - enabled: 1
       colorId: 1
     - enabled: 1
-      colorId: 3
-  - cells:
+      colorId: 2
     - enabled: 1
       colorId: 0
+  - cells:
     - enabled: 1
       colorId: 1
     - enabled: 1
       colorId: 0
     - enabled: 1
+      colorId: 2
+    - enabled: 1
+      colorId: 2
+    - enabled: 1
       colorId: 0
+  - cells:
+    - enabled: 1
+      colorId: 1
     - enabled: 1
       colorId: 0
     - enabled: 1
-      colorId: 3
-  colorConfigPool: {fileID: 11400000, guid: 009674186c49941f6bbee4f8cd6ba650, type: 2}
+      colorId: 1
+    - enabled: 1
+      colorId: 0
+    - enabled: 1
+      colorId: 0
+  colorConfigPool: {fileID: 0}
   colorPalette:
-  - {r: 1, g: 0.08018869, b: 0.08018869, a: 1}
-  - {r: 0.07843137, g: 0.272315, b: 1, a: 1}
-  - {r: 0.21008232, g: 1, b: 0.07843137, a: 1}
-  - {r: 1, g: 0.9960612, b: 0.07843137, a: 1}
-  colorCount: 4
-  beltSpeed: 0.34
+  - {r: 1, g: 0.14999998, b: 0.14999998, a: 1}
+  - {r: 0.575, g: 1, b: 0.14999998, a: 1}
+  - {r: 0.14999998, g: 1, b: 1, a: 1}
+  colorCount: 3
+  beltSpeed: 0.2
   slotsPerTray: 3
-  beltSlotCount: 6
+  beltSlotCount: 7
   trayColumns:
   - trays:
-    - colorId: 0
-      capacity: 3
     - colorId: 1
       capacity: 3
     - colorId: 2
       capacity: 3
-  - trays:
     - colorId: 0
-      capacity: 3
-    - colorId: 1
-      capacity: 3
-    - colorId: 3
-      capacity: 3
-  - trays:
-    - colorId: 0
-      capacity: 3
-    - colorId: 2
-      capacity: 3
-    - colorId: 3
       capacity: 3
   - trays:
     - colorId: 1
       capacity: 3
     - colorId: 2
+      capacity: 1
+  - trays:
+    - colorId: 1
       capacity: 3
-    - colorId: 3
+    - colorId: 0
+      capacity: 3
+  - trays:
+    - colorId: 2
+      capacity: 3
+    - colorId: 0
       capacity: 3
   difficultyParameters:
     maxCanonicalConveyorPressure: 0.25
