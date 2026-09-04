@@ -9,8 +9,12 @@ namespace PopSort
         [SerializeField] private BallPool ballPool;
         [SerializeField] private TraySlot traySlotPrefab;
         [SerializeField] private Transform[] columnAnchors;
+        [SerializeField] private Transform column1PickupPoint;
+        [SerializeField] private Transform column2PickupPoint;
+        [SerializeField] private Transform column3PickupPoint;
+        [SerializeField] private Transform column4PickupPoint;
         [SerializeField] private float generatedRowSpacing = 1.1f;
-        [SerializeField] private TrayColumn[] trayColumns;
+        private TrayColumn[] trayColumns;
 
         private readonly List<GameObject> generatedObjects = new List<GameObject>();
 
@@ -77,6 +81,28 @@ namespace PopSort
 
             return false;
         }
+
+        public Transform GetColumnPickupPoint(int columnIndex)
+        {
+            return columnIndex switch
+            {
+                0 => column1PickupPoint,
+                1 => column2PickupPoint,
+                2 => column3PickupPoint,
+                3 => column4PickupPoint,
+                _ => null
+            };
+        }
+
+        public bool TryAcceptBallAtColumn(int columnIndex, Ball ball)
+        {
+            if (trayColumns == null || columnIndex < 0 || columnIndex >= trayColumns.Length) return false;
+
+            TrayColumn column = trayColumns[columnIndex];
+            return column != null && column.TryAcceptBall(ball);
+        }
+
+        public int ColumnCount => trayColumns?.Length ?? 0;
 
         public void SetLevelData(LevelData newLevelData)
         {

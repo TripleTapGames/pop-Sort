@@ -16,15 +16,37 @@ MonoBehaviour:
   rows:
   - cells:
     - enabled: 1
+      colorId: 2
+    - enabled: 1
+      colorId: 0
+    - enabled: 1
+      colorId: 1
+    - enabled: 1
+      colorId: 0
+    - enabled: 1
+      colorId: 2
+  - cells:
+    - enabled: 1
+      colorId: 2
+    - enabled: 1
       colorId: 0
     - enabled: 1
       colorId: 1
     - enabled: 1
       colorId: 1
     - enabled: 1
-      colorId: 0
+      colorId: 1
+  - cells:
     - enabled: 1
-      colorId: 0
+      colorId: 1
+    - enabled: 1
+      colorId: 1
+    - enabled: 1
+      colorId: 1
+    - enabled: 1
+      colorId: 1
+    - enabled: 1
+      colorId: 1
   - cells:
     - enabled: 1
       colorId: 2
@@ -33,41 +55,19 @@ MonoBehaviour:
     - enabled: 1
       colorId: 2
     - enabled: 1
-      colorId: 1
-    - enabled: 1
       colorId: 2
+    - enabled: 1
+      colorId: 1
   - cells:
     - enabled: 1
-      colorId: 1
-    - enabled: 1
       colorId: 2
-    - enabled: 1
-      colorId: 1
-    - enabled: 1
-      colorId: 2
-    - enabled: 1
-      colorId: 0
-  - cells:
-    - enabled: 1
-      colorId: 1
-    - enabled: 1
-      colorId: 0
     - enabled: 1
       colorId: 2
     - enabled: 1
       colorId: 2
     - enabled: 1
-      colorId: 0
-  - cells:
-    - enabled: 1
       colorId: 1
-    - enabled: 1
-      colorId: 0
-    - enabled: 1
-      colorId: 1
-    - enabled: 1
-      colorId: 0
-    - enabled: 1
+    - enabled: 0
       colorId: 0
   colorConfigPool: {fileID: 0}
   colorPalette:
@@ -80,24 +80,22 @@ MonoBehaviour:
   beltSlotCount: 7
   trayColumns:
   - trays:
-    - colorId: 1
-      capacity: 3
     - colorId: 2
       capacity: 3
-    - colorId: 0
-      capacity: 3
-  - trays:
     - colorId: 1
-      capacity: 3
-    - colorId: 2
-      capacity: 1
-  - trays:
-    - colorId: 1
-      capacity: 3
-    - colorId: 0
       capacity: 3
   - trays:
     - colorId: 2
+      capacity: 3
+    - colorId: 1
+      capacity: 3
+  - trays:
+    - colorId: 2
+      capacity: 3
+    - colorId: 1
+      capacity: 3
+  - trays:
+    - colorId: 1
       capacity: 3
     - colorId: 0
       capacity: 3

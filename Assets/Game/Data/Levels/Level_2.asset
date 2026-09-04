@@ -19,6 +19,19 @@ MonoBehaviour:
       colorId: 0
     - enabled: 1
       colorId: 0
+    - enabled: 0
+      colorId: 0
+    - enabled: 1
+      colorId: 0
+    - enabled: 1
+      colorId: 1
+  - cells:
+    - enabled: 1
+      colorId: 0
+    - enabled: 1
+      colorId: 0
+    - enabled: 1
+      colorId: 0
     - enabled: 1
       colorId: 1
     - enabled: 1
@@ -29,20 +42,26 @@ MonoBehaviour:
     - enabled: 1
       colorId: 0
     - enabled: 1
+      colorId: 1
+    - enabled: 1
       colorId: 0
     - enabled: 1
       colorId: 0
   - cells:
     - enabled: 1
-      colorId: 1
-    - enabled: 1
-      colorId: 1
-    - enabled: 1
-      colorId: 1
+      colorId: 0
     - enabled: 1
       colorId: 0
+    - enabled: 1
+      colorId: 0
+    - enabled: 1
+      colorId: 1
+    - enabled: 1
+      colorId: 1
   - cells:
     - enabled: 1
+      colorId: 0
+    - enabled: 1
       colorId: 1
     - enabled: 1
       colorId: 1
@@ -50,16 +69,6 @@ MonoBehaviour:
       colorId: 1
     - enabled: 1
       colorId: 0
-  - cells:
-    - enabled: 1
-      colorId: 1
-    - enabled: 1
-      colorId: 0
-    - enabled: 1
-      colorId: 0
-    - enabled: 1
-      colorId: 0
-  colorConfigPool: {fileID: 0}
   colorPalette:
   - {r: 1, g: 0.14999998, b: 0.14999998, a: 1}
   - {r: 0.575, g: 1, b: 0.14999998, a: 1}
@@ -69,22 +78,24 @@ MonoBehaviour:
   beltSlotCount: 7
   trayColumns:
   - trays:
-    - colorId: 1
+    - colorId: 0
       capacity: 3
     - colorId: 0
       capacity: 3
   - trays:
+    - colorId: 0
+      capacity: 3
     - colorId: 1
       capacity: 3
+  - trays:
     - colorId: 0
       capacity: 3
-  - trays:
     - colorId: 1
       capacity: 3
-    - colorId: 0
-      capacity: 2
   - trays:
     - colorId: 0
+      capacity: 3
+    - colorId: 1
       capacity: 3
   difficultyParameters:
     maxCanonicalConveyorPressure: 0.25

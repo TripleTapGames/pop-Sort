@@ -39,17 +39,12 @@ namespace PopSort.EditorTools
                 return messages;
             }
 
-            if (levelData.colorConfigPool == null && (levelData.colorPalette == null || levelData.colorPalette.Length == 0))
+            if (levelData.colorPalette == null || levelData.colorPalette.Length == 0)
             {
                 LevelValidationSeverity severity = levelData.colorCount == 0
                     ? LevelValidationSeverity.Warning
                     : LevelValidationSeverity.Error;
-                messages.Add(new LevelValidationMessage(severity, "Assign a color palette or color config pool."));
-            }
-
-            if (levelData.colorConfigPool != null && (levelData.colorConfigPool.colors == null || levelData.colorConfigPool.colors.Count == 0))
-            {
-                messages.Add(new LevelValidationMessage(LevelValidationSeverity.Error, "Color config pool is empty."));
+                messages.Add(new LevelValidationMessage(severity, "Color palette is empty."));
             }
 
             if (levelData.colorCount < 0)
@@ -88,14 +83,9 @@ namespace PopSort.EditorTools
                         messages.Add(new LevelValidationMessage(LevelValidationSeverity.Error, $"Cell ({x}, {y}) has color id outside active color count."));
                     }
 
-                    if (levelData.colorConfigPool == null && levelData.colorPalette != null && cell.colorId >= levelData.colorPalette.Length)
+                    if (levelData.colorPalette != null && cell.colorId >= levelData.colorPalette.Length)
                     {
                         messages.Add(new LevelValidationMessage(LevelValidationSeverity.Error, $"Cell ({x}, {y}) has no matching palette color."));
-                    }
-
-                    if (levelData.colorConfigPool != null && !levelData.colorConfigPool.ContainsId(cell.colorId))
-                    {
-                        messages.Add(new LevelValidationMessage(LevelValidationSeverity.Error, $"Cell ({x}, {y}) has no matching color pool entry for id {cell.colorId}."));
                     }
                 }
             }

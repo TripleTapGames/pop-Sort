@@ -11,7 +11,6 @@ namespace PopSort
         [SerializeField] private BallPool ballPool;
         [SerializeField] private TrayManager trayManager;
         [SerializeField] private SplineConveyorBelt2D splineConveyorBelt;
-        [SerializeField] private Transform trayPickupPoint;
         [SerializeField] private float acceptDistanceThreshold = 0.05f;
         [SerializeField] private float noMatchFailDelay = 0.75f;
 
@@ -70,9 +69,9 @@ namespace PopSort
 
         public void HandleBallLanded(Ball ball)
         {
-            if (splineConveyorBelt == null || trayPickupPoint == null)
+            if (splineConveyorBelt == null || trayManager == null || trayManager.ColumnCount == 0)
             {
-                Debug.LogError("BeltQueueManager requires Spline Conveyor Belt and Tray Pickup Point references.", this);
+                Debug.LogError("BeltQueueManager requires Spline Conveyor Belt and tray column pickup points.", this);
                 OnOverflow?.Invoke();
                 return;
             }
@@ -187,10 +186,7 @@ namespace PopSort
             for (int i = queue.Count - 1; i >= 0; i--)
             {
                 QueuedBall queuedBall = queue[i];
-                float distance = Vector3.Distance(queuedBall.Ball.transform.position, trayPickupPoint.position);
-                if (distance > acceptDistanceThreshold) continue;
-
-                if (!trayManager.TryAcceptBall(queuedBall.Ball))
+                if (!TryCollectBallAtColumnPickup(queuedBall))
                 {
                     continue;
                 }
@@ -199,6 +195,22 @@ namespace PopSort
                 occupiedSplineSlots.Remove(queuedBall.SplineSlotIndex);
                 queue.RemoveAt(i);
             }
+        }
+
+        private bool TryCollectBallAtColumnPickup(QueuedBall queuedBall)
+        {
+            for (int columnIndex = 0; columnIndex < trayManager.ColumnCount; columnIndex++)
+            {
+                Transform pickupPoint = trayManager.GetColumnPickupPoint(columnIndex);
+                if (pickupPoint == null) continue;
+
+                float distance = Vector3.Distance(queuedBall.Ball.transform.position, pickupPoint.position);
+                if (distance > acceptDistanceThreshold) continue;
+
+                return trayManager.TryAcceptBallAtColumn(columnIndex, queuedBall.Ball);
+            }
+
+            return false;
         }
 
         private struct QueuedBall

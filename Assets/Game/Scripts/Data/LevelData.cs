@@ -62,7 +62,6 @@ namespace PopSort
 
         public LevelDifficulty difficulty;
         public GridRow[] rows;
-        public ColorConfigPool colorConfigPool;
         public Color[] colorPalette;
         public int colorCount = 4;
         public float beltSpeed = 0.2f;
@@ -76,15 +75,7 @@ namespace PopSort
 
         public GridCell GetCell(int x, int y) => rows[y].cells[x];
 
-        public Color GetColor(int colorId)
-        {
-            if (colorConfigPool != null && colorConfigPool.TryGet(colorId, out ColorConfig config))
-            {
-                return config.color;
-            }
-
-            return colorPalette[colorId];
-        }
+        public Color GetColor(int colorId) => colorPalette[colorId];
 
         public int[] CountBallsByColor()
         {

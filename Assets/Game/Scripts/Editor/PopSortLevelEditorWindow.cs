@@ -103,9 +103,7 @@ namespace PopSort.EditorTools
         private void DrawPaletteSection()
         {
             EditorGUILayout.LabelField("Palette", EditorStyles.boldLabel);
-            ColorConfigPool colorPool = levelData.colorConfigPool != null
-                ? levelData.colorConfigPool
-                : FindColorConfigPool();
+            ColorConfigPool colorPool = FindColorConfigPool();
             if (colorPool != null)
             {
                 string[] colorNames = GetColorNames(colorPool);
@@ -203,7 +201,6 @@ namespace PopSort.EditorTools
             if (config == null || config.id < 0) return;
 
             Undo.RecordObject(levelData, "Add Color To Level Palette");
-            levelData.colorConfigPool = colorPool;
             levelData.colorCount = Mathf.Max(levelData.colorCount, config.id + 1);
             EnsurePaletteSize();
             levelData.colorPalette[config.id] = config.color;
@@ -436,14 +433,20 @@ namespace PopSort.EditorTools
                 return;
             }
 
-            int trayCapacity = Mathf.Max(levelData.slotsPerTray, 1);
             int totalCells = gridWidth * gridHeight;
             int colorCount = Mathf.Max(levelData.colorCount, 1);
+            int trayCapacity = Mathf.Max(levelData.slotsPerTray, 1);
+            int usableCellCount = totalCells - (totalCells % trayCapacity);
 
             List<int> ballColors = new List<int>();
-            for (int colorBallIndex = 0; colorBallIndex < totalCells; colorBallIndex++)
+            int groupCount = usableCellCount / trayCapacity;
+            for (int groupIndex = 0; groupIndex < groupCount; groupIndex++)
             {
-                ballColors.Add((colorBallIndex / trayCapacity) % colorCount);
+                int colorId = Random.Range(0, colorCount);
+                for (int slotIndex = 0; slotIndex < trayCapacity; slotIndex++)
+                {
+                    ballColors.Add(colorId);
+                }
             }
 
             for (int i = ballColors.Count - 1; i > 0; i--)
@@ -452,14 +455,29 @@ namespace PopSort.EditorTools
                 (ballColors[i], ballColors[j]) = (ballColors[j], ballColors[i]);
             }
 
+            List<GridCell> generatedCells = new List<GridCell>(totalCells);
+            foreach (int colorId in ballColors)
+            {
+                generatedCells.Add(new GridCell { enabled = true, colorId = colorId });
+            }
+
+            while (generatedCells.Count < totalCells)
+            {
+                generatedCells.Add(new GridCell());
+            }
+
+            for (int i = generatedCells.Count - 1; i > 0; i--)
+            {
+                int j = Random.Range(0, i + 1);
+                (generatedCells[i], generatedCells[j]) = (generatedCells[j], generatedCells[i]);
+            }
+
             int ballIndex = 0;
             for (int y = 0; y < levelData.Height; y++)
             {
                 for (int x = 0; x < levelData.Width; x++)
                 {
-                    levelData.rows[y].cells[x] = ballIndex < ballColors.Count
-                        ? new GridCell { enabled = true, colorId = ballColors[ballIndex++] }
-                        : new GridCell();
+                    levelData.rows[y].cells[x] = generatedCells[ballIndex++];
                 }
             }
 
