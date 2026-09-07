@@ -7,7 +7,7 @@ namespace PopSort
     public class TraySlot : MonoBehaviour
     {
         [SerializeField] private int colorId;
-        [SerializeField] private Color trayColor = Color.white;
+        [SerializeField] private Sprite traySprite;
         [SerializeField] private int capacity = 3;
         [SerializeField] private BallPool ballPool;
         [SerializeField] private Transform[] slotPositions; // manually placed in the editor, one per capacity slot
@@ -23,7 +23,7 @@ namespace PopSort
         private void OnValidate()
         {
             SpriteRenderer trayVisual = GetComponent<SpriteRenderer>();
-            if (trayVisual != null) trayVisual.color = trayColor;
+            if (trayVisual != null && traySprite != null) trayVisual.sprite = traySprite;
         }
 
         private void Awake()
@@ -31,11 +31,11 @@ namespace PopSort
             ApplyTrayColor();
         }
 
-        public void Configure(int colorId, int capacity, Color trayColor, BallPool ballPool)
+        public void Configure(int colorId, int capacity, Sprite traySprite, BallPool ballPool)
         {
             this.colorId = colorId;
             this.capacity = Mathf.Max(capacity, 1);
-            this.trayColor = trayColor;
+            this.traySprite = traySprite;
             this.ballPool = ballPool;
             placedBalls.Clear();
             ApplyTrayColor();
@@ -86,7 +86,7 @@ namespace PopSort
         private void ApplyTrayColor()
         {
             SpriteRenderer trayVisual = GetComponent<SpriteRenderer>();
-            if (trayVisual != null) trayVisual.color = trayColor;
+            if (trayVisual != null && traySprite != null) trayVisual.sprite = traySprite;
         }
     }
 }

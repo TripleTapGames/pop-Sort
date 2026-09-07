@@ -9,7 +9,8 @@ namespace PopSort
     {
         public int id;
         public string displayName = "Color";
-        public Color color = Color.white;
+
+        public Sprite popHolder, popBalls, trayAsset;
     }
 
     [CreateAssetMenu(fileName = "ColorConfigPool", menuName = "PopSort/Color Config Pool")]

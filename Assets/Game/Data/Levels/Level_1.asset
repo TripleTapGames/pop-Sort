@@ -16,29 +16,43 @@ MonoBehaviour:
   rows:
   - cells:
     - enabled: 1
-      colorId: 0
+      colorId: 1
+      ballCount: 2
     - enabled: 1
       colorId: 0
+      ballCount: 2
     - enabled: 1
       colorId: 1
+      ballCount: 2
+  - cells:
+    - enabled: 1
+      colorId: 1
+      ballCount: 2
+    - enabled: 1
+      colorId: 0
+      ballCount: 2
+    - enabled: 1
+      colorId: 0
+      ballCount: 2
   - cells:
     - enabled: 1
       colorId: 0
-    - enabled: 1
-      colorId: 1
-    - enabled: 1
-      colorId: 0
-  - cells:
+      ballCount: 2
     - enabled: 1
       colorId: 0
-    - enabled: 1
-      colorId: 1
+      ballCount: 2
     - enabled: 1
       colorId: 0
-  colorConfigPool: {fileID: 0}
+      ballCount: 2
   colorPalette:
   - {r: 1, g: 0.14999998, b: 0.14999998, a: 1}
   - {r: 0.575, g: 1, b: 0.14999998, a: 1}
+  popAssets:
+  - {fileID: 21300000, guid: b3d647badf2b74936b0c0f940fbad891, type: 3}
+  - {fileID: 21300000, guid: 20a392eafe5d34f82a6b9441c62d348d, type: 3}
+  trayAssets:
+  - {fileID: 0}
+  - {fileID: 0}
   colorCount: 2
   beltSpeed: 0.2
   slotsPerTray: 3
@@ -47,13 +61,19 @@ MonoBehaviour:
   - trays:
     - colorId: 0
       capacity: 3
+    - colorId: 1
+      capacity: 3
+  - trays:
+    - colorId: 0
+      capacity: 3
+    - colorId: 1
+      capacity: 3
   - trays:
     - colorId: 0
       capacity: 3
   - trays:
-    - colorId: 1
+    - colorId: 0
       capacity: 3
-  - trays: []
   difficultyParameters:
     maxCanonicalConveyorPressure: 0.25
     forcedReliefThreshold: 0.15

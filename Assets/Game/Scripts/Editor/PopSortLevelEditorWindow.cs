@@ -14,6 +14,8 @@ namespace PopSort.EditorTools
         private int gridHeight = 5;
         private int activeColorId;
         private int selectedPoolColorIndex;
+        private int selectedCellX = -1;
+        private int selectedCellY = -1;
         private Vector2 scrollPosition;
 
         [MenuItem("Tools/PopSort/Level Editor")]
@@ -83,6 +85,8 @@ namespace PopSort.EditorTools
             levelData.colorCount = Mathf.Max(0, EditorGUILayout.IntField("Color Count", levelData.colorCount));
             levelData.beltSlotCount = Mathf.Max(1, EditorGUILayout.IntField("Belt Slot Count", levelData.beltSlotCount));
             levelData.slotsPerTray = Mathf.Max(1, EditorGUILayout.IntField("Slots Per Tray", levelData.slotsPerTray));
+            levelData.maxTrayColumnCount = Mathf.Clamp(
+                EditorGUILayout.IntField("Max Tray Columns", levelData.maxTrayColumnCount), 2, 4);
 
             if (difficultyChanged)
             {
@@ -129,10 +133,15 @@ namespace PopSort.EditorTools
             {
                 for (int i = 0; i < levelData.colorCount; i++)
                 {
-                    using (new EditorGUILayout.VerticalScope(GUILayout.Width(70f)))
+                    using (new EditorGUILayout.VerticalScope(GUILayout.Width(84f)))
                     {
-                        levelData.colorPalette[i] = EditorGUILayout.ColorField(levelData.colorPalette[i], GUILayout.Width(60f));
-                        if (GUILayout.Toggle(activeColorId == i, $"Color {i}", "Button", GUILayout.Width(65f)))
+                        levelData.popAssets[i] = (Sprite)EditorGUILayout.ObjectField(
+                            levelData.popAssets[i], typeof(Sprite), false, GUILayout.Width(60f));
+                        levelData.trayAssets[i] = (Sprite)EditorGUILayout.ObjectField(
+                            levelData.trayAssets[i], typeof(Sprite), false, GUILayout.Width(60f));
+                        levelData.holderAssets[i] = (Sprite)EditorGUILayout.ObjectField(
+                            levelData.holderAssets[i], typeof(Sprite), false, GUILayout.Width(60f));
+                        if (GUILayout.Toggle(activeColorId == i, $"Color {i}", "Button", GUILayout.Width(80f)))
                         {
                             activeColorId = i;
                         }
@@ -173,6 +182,7 @@ namespace PopSort.EditorTools
             }
 
             levelData.colorPalette = resizedPalette;
+            EnsurePaletteSize();
             activeColorId = Mathf.Clamp(activeColorId, 0, levelData.colorCount - 1);
             EditorUtility.SetDirty(levelData);
         }
@@ -203,7 +213,9 @@ namespace PopSort.EditorTools
             Undo.RecordObject(levelData, "Add Color To Level Palette");
             levelData.colorCount = Mathf.Max(levelData.colorCount, config.id + 1);
             EnsurePaletteSize();
-            levelData.colorPalette[config.id] = config.color;
+            levelData.popAssets[config.id] = config.popBalls;
+            levelData.trayAssets[config.id] = config.trayAsset;
+            levelData.holderAssets[config.id] = config.popHolder;
             activeColorId = config.id;
             EditorUtility.SetDirty(levelData);
         }
@@ -269,6 +281,8 @@ namespace PopSort.EditorTools
                 ResizeGrid(gridWidth, gridHeight);
             }
 
+            DrawBallCountSection();
+
             for (int y = 0; y < levelData.Height; y++)
             {
                 using (new EditorGUILayout.HorizontalScope())
@@ -290,12 +304,18 @@ namespace PopSort.EditorTools
                 : Color.gray;
 
             Rect rect = GUILayoutUtility.GetRect(CellSize, CellSize, GUILayout.Width(CellSize), GUILayout.Height(CellSize));
-            if (GUI.Button(rect, cell.enabled ? cell.colorId.ToString() : ""))
+            string label = cell.enabled
+                ? Mathf.Max(1, cell.ballCount) > 1 ? $"{cell.colorId} x{Mathf.Max(1, cell.ballCount)}" : cell.colorId.ToString()
+                : "";
+            if (GUI.Button(rect, label))
             {
                 Undo.RecordObject(levelData, "Paint Grid Cell");
                 cell.enabled = true;
                 cell.colorId = activeColorId;
+                cell.ballCount = Mathf.Max(1, cell.ballCount);
                 levelData.rows[y].cells[x] = cell;
+                selectedCellX = x;
+                selectedCellY = y;
                 EditorUtility.SetDirty(levelData);
             }
 
@@ -310,6 +330,27 @@ namespace PopSort.EditorTools
             }
 
             GUI.backgroundColor = oldColor;
+        }
+
+        private void DrawBallCountSection()
+        {
+            if (selectedCellX < 0 || selectedCellY < 0 || levelData.rows == null ||
+                selectedCellY >= levelData.Height || selectedCellX >= levelData.Width)
+            {
+                return;
+            }
+
+            GridCell cell = levelData.GetCell(selectedCellX, selectedCellY);
+            if (!cell.enabled) return;
+
+            EditorGUI.BeginChangeCheck();
+            int ballCount = Mathf.Max(1, EditorGUILayout.IntField("Ball Count", Mathf.Max(1, cell.ballCount)));
+            if (!EditorGUI.EndChangeCheck()) return;
+
+            Undo.RecordObject(levelData, "Edit Grid Cell Ball Count");
+            cell.ballCount = ballCount;
+            levelData.rows[selectedCellY].cells[selectedCellX] = cell;
+            EditorUtility.SetDirty(levelData);
         }
 
         private void DrawGeneratedTraySection()
@@ -439,13 +480,17 @@ namespace PopSort.EditorTools
             int usableCellCount = totalCells - (totalCells % trayCapacity);
 
             List<int> ballColors = new List<int>();
+            List<int> ballCounts = new List<int>();
             int groupCount = usableCellCount / trayCapacity;
+            int maxBallCount = GetMaxBallCount(levelData.difficulty);
             for (int groupIndex = 0; groupIndex < groupCount; groupIndex++)
             {
                 int colorId = Random.Range(0, colorCount);
+                int groupBallCount = Random.Range(1, maxBallCount + 1);
                 for (int slotIndex = 0; slotIndex < trayCapacity; slotIndex++)
                 {
                     ballColors.Add(colorId);
+                    ballCounts.Add(groupBallCount);
                 }
             }
 
@@ -453,12 +498,13 @@ namespace PopSort.EditorTools
             {
                 int j = Random.Range(0, i + 1);
                 (ballColors[i], ballColors[j]) = (ballColors[j], ballColors[i]);
+                (ballCounts[i], ballCounts[j]) = (ballCounts[j], ballCounts[i]);
             }
 
             List<GridCell> generatedCells = new List<GridCell>(totalCells);
-            foreach (int colorId in ballColors)
+            for (int i = 0; i < ballColors.Count; i++)
             {
-                generatedCells.Add(new GridCell { enabled = true, colorId = colorId });
+                generatedCells.Add(new GridCell { enabled = true, colorId = ballColors[i], ballCount = ballCounts[i] });
             }
 
             while (generatedCells.Count < totalCells)
@@ -481,8 +527,19 @@ namespace PopSort.EditorTools
                 }
             }
 
-            levelData.GenerateTrayColumnsFromGrid(levelData.difficultyParameters.preferredTrayColumnCount);
+            levelData.GenerateTrayColumnsFromGrid();
             EditorUtility.SetDirty(levelData);
+        }
+
+        private static int GetMaxBallCount(LevelDifficulty difficulty)
+        {
+            switch (difficulty)
+            {
+                case LevelDifficulty.Medium: return 6;
+                case LevelDifficulty.Hard: return 9;
+                case LevelDifficulty.SuperHard: return 12;
+                default: return 3;
+            }
         }
 
         private void ResizeGrid(int width, int height)
@@ -513,7 +570,7 @@ namespace PopSort.EditorTools
             {
                 for (int x = 0; x < levelData.Width; x++)
                 {
-                    levelData.rows[y].cells[x] = new GridCell { enabled = true, colorId = activeColorId };
+                    levelData.rows[y].cells[x] = new GridCell { enabled = true, colorId = activeColorId, ballCount = 1 };
                 }
             }
 
@@ -553,18 +610,50 @@ namespace PopSort.EditorTools
         {
             int size = Mathf.Max(levelData.colorCount, 0);
             Color[] oldPalette = levelData.colorPalette;
-            if (oldPalette != null && oldPalette.Length == size) return;
-
-            levelData.colorPalette = new Color[size];
-            for (int i = 0; i < size; i++)
+            bool paletteNeedsResize = oldPalette == null || oldPalette.Length != size;
+            if (paletteNeedsResize)
             {
-                if (oldPalette != null && i < oldPalette.Length)
+                levelData.colorPalette = new Color[size];
+                for (int i = 0; i < size; i++)
                 {
-                    levelData.colorPalette[i] = oldPalette[i];
+                    if (oldPalette != null && i < oldPalette.Length)
+                    {
+                        levelData.colorPalette[i] = oldPalette[i];
+                    }
+                    else
+                    {
+                        levelData.colorPalette[i] = Color.HSVToRGB(i / (float)size, 0.85f, 1f);
+                    }
                 }
-                else
+            }
+
+            if (levelData.popAssets == null || levelData.popAssets.Length != size)
+            {
+                Sprite[] oldAssets = levelData.popAssets;
+                levelData.popAssets = new Sprite[size];
+                for (int i = 0; i < size && oldAssets != null && i < oldAssets.Length; i++)
                 {
-                    levelData.colorPalette[i] = Color.HSVToRGB(i / (float)size, 0.85f, 1f);
+                    levelData.popAssets[i] = oldAssets[i];
+                }
+            }
+
+            if (levelData.trayAssets == null || levelData.trayAssets.Length != size)
+            {
+                Sprite[] oldAssets = levelData.trayAssets;
+                levelData.trayAssets = new Sprite[size];
+                for (int i = 0; i < size && oldAssets != null && i < oldAssets.Length; i++)
+                {
+                    levelData.trayAssets[i] = oldAssets[i];
+                }
+            }
+
+            if (levelData.holderAssets == null || levelData.holderAssets.Length != size)
+            {
+                Sprite[] oldAssets = levelData.holderAssets;
+                levelData.holderAssets = new Sprite[size];
+                for (int i = 0; i < size && oldAssets != null && i < oldAssets.Length; i++)
+                {
+                    levelData.holderAssets[i] = oldAssets[i];
                 }
             }
 

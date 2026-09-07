@@ -58,7 +58,7 @@ namespace PopSort
                     traySlot.Configure(
                         trays[trayIndex].colorId,
                         trays[trayIndex].capacity,
-                        levelData.GetColor(trays[trayIndex].colorId),
+                        levelData.GetTrayAsset(trays[trayIndex].colorId),
                         ballPool);
                     spawnedSlots[trayIndex] = traySlot;
                     spawnedTrayCount++;

@@ -28,6 +28,7 @@ namespace PopSort
     {
         public bool enabled;
         public int colorId;
+        public int ballCount;
     }
 
     [Serializable]
@@ -63,10 +64,14 @@ namespace PopSort
         public LevelDifficulty difficulty;
         public GridRow[] rows;
         public Color[] colorPalette;
+        public Sprite[] popAssets;
+        public Sprite[] trayAssets;
+        public Sprite[] holderAssets;
         public int colorCount = 4;
         public float beltSpeed = 0.2f;
         public int slotsPerTray = 3;
         public int beltSlotCount = 7;
+        [Range(2, 4)] public int maxTrayColumnCount = 4;
         public TrayColumnData[] trayColumns;
         public DifficultyParameters difficultyParameters = new DifficultyParameters();
 
@@ -76,6 +81,21 @@ namespace PopSort
         public GridCell GetCell(int x, int y) => rows[y].cells[x];
 
         public Color GetColor(int colorId) => colorPalette[colorId];
+
+        public Sprite GetPopAsset(int colorId)
+        {
+            return popAssets != null && colorId >= 0 && colorId < popAssets.Length ? popAssets[colorId] : null;
+        }
+
+        public Sprite GetTrayAsset(int colorId)
+        {
+            return trayAssets != null && colorId >= 0 && colorId < trayAssets.Length ? trayAssets[colorId] : null;
+        }
+
+        public Sprite GetHolderAsset(int colorId)
+        {
+            return holderAssets != null && colorId >= 0 && colorId < holderAssets.Length ? holderAssets[colorId] : null;
+        }
 
         public int[] CountBallsByColor()
         {
@@ -91,7 +111,7 @@ namespace PopSort
                 foreach (GridCell cell in row.cells)
                 {
                     if (!cell.enabled || cell.colorId < 0 || cell.colorId >= counts.Length) continue;
-                    counts[cell.colorId]++;
+                    counts[cell.colorId] += Mathf.Max(1, cell.ballCount);
                 }
             }
 
@@ -130,7 +150,7 @@ namespace PopSort
         {
             int[] ballCounts = CountBallsByColor();
             int trayCapacity = Mathf.Max(slotsPerTray, 1);
-            int clampedColumnCount = Mathf.Clamp(columnCount, 2, 4);
+            int clampedColumnCount = Mathf.Clamp(columnCount, 2, Mathf.Clamp(maxTrayColumnCount, 2, 4));
             List<TrayData>[] traysByColor = new List<TrayData>[ballCounts.Length];
 
             for (int colorId = 0; colorId < ballCounts.Length; colorId++)
@@ -276,12 +296,11 @@ namespace PopSort
 
         private int GetPreferredTrayColumnCount()
         {
-            if (difficultyParameters != null)
-            {
-                return Mathf.Clamp(difficultyParameters.preferredTrayColumnCount, 2, 4);
-            }
+            int preferredCount = difficultyParameters != null
+                ? difficultyParameters.preferredTrayColumnCount
+                : difficulty == LevelDifficulty.SuperHard || difficulty == LevelDifficulty.Hard ? 2 : 4;
 
-            return difficulty == LevelDifficulty.SuperHard || difficulty == LevelDifficulty.Hard ? 2 : 4;
+            return Mathf.Clamp(preferredCount, 2, Mathf.Clamp(maxTrayColumnCount, 2, 4));
         }
 
         private int GetUsefulBallUnlockDepth()

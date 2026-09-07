@@ -78,6 +78,11 @@ namespace PopSort.EditorTools
                     if (!cell.enabled) continue;
 
                     enabledCells++;
+                    if (cell.ballCount < 1)
+                    {
+                        messages.Add(new LevelValidationMessage(LevelValidationSeverity.Error, $"Cell ({x}, {y}) has ball count below 1."));
+                    }
+
                     if (cell.colorId < 0 || cell.colorId >= levelData.colorCount)
                     {
                         messages.Add(new LevelValidationMessage(LevelValidationSeverity.Error, $"Cell ({x}, {y}) has color id outside active color count."));
@@ -86,6 +91,12 @@ namespace PopSort.EditorTools
                     if (levelData.colorPalette != null && cell.colorId >= levelData.colorPalette.Length)
                     {
                         messages.Add(new LevelValidationMessage(LevelValidationSeverity.Error, $"Cell ({x}, {y}) has no matching palette color."));
+                    }
+
+                    if (levelData.GetPopAsset(cell.colorId) == null || levelData.GetTrayAsset(cell.colorId) == null ||
+                        levelData.GetHolderAsset(cell.colorId) == null)
+                    {
+                        messages.Add(new LevelValidationMessage(LevelValidationSeverity.Error, $"Cell ({x}, {y}) color {cell.colorId} is missing pop/holder/tray assets."));
                     }
                 }
             }

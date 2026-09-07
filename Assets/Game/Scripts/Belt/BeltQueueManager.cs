@@ -1,4 +1,5 @@
 using System;
+using System.Collections;
 using System.Collections.Generic;
 using PaperSort.Game;
 using UnityEngine;
@@ -11,8 +12,11 @@ namespace PopSort
         [SerializeField] private BallPool ballPool;
         [SerializeField] private TrayManager trayManager;
         [SerializeField] private SplineConveyorBelt2D splineConveyorBelt;
+        [SerializeField] private Transform funnelExitPoint;
         [SerializeField] private float acceptDistanceThreshold = 0.05f;
         [SerializeField] private float noMatchFailDelay = 0.75f;
+        [SerializeField] private float funnelMoveSpeed = 6f;
+        [SerializeField] private float slotCatchDistance = 0.35f;
 
         public event Action OnOverflow;
 
@@ -36,6 +40,8 @@ namespace PopSort
 
         public void ClearQueue()
         {
+            StopAllCoroutines();
+
             foreach (QueuedBall queuedBall in queue)
             {
                 if (queuedBall.Ball == null) continue;
@@ -76,7 +82,14 @@ namespace PopSort
                 return;
             }
 
-            AddBallToSplineBelt(ball);
+            if (funnelExitPoint == null)
+            {
+                Debug.LogError("BeltQueueManager requires a Funnel Exit Point.", this);
+                OnOverflow?.Invoke();
+                return;
+            }
+
+            StartCoroutine(HoldAtFunnelExit(ball));
         }
 
         private void Update()
@@ -90,7 +103,6 @@ namespace PopSort
         {
             if (queue.Count >= GetBeltCapacity())
             {
-                ball.SetQueued();
                 pendingBalls.Add(ball);
                 return;
             }
@@ -98,15 +110,47 @@ namespace PopSort
             int slotIndex = FindNearestFreeSplineSlot(ball.transform.position);
             if (slotIndex < 0)
             {
-                ball.SetQueued();
                 pendingBalls.Add(ball);
                 return;
             }
 
-            ball.SetQueued();
+            AttachBallToSlot(ball, slotIndex);
+        }
+
+        private void AttachBallToSlot(Ball ball, int slotIndex)
+        {
             splineConveyorBelt.AttachObjectToSlot(ball.transform, slotIndex);
             occupiedSplineSlots.Add(slotIndex);
             queue.Add(new QueuedBall(ball, slotIndex));
+        }
+
+        private IEnumerator HoldAtFunnelExit(Ball ball)
+        {
+            ball.SetQueued();
+
+            while (ball != null && Vector3.Distance(ball.transform.position, funnelExitPoint.position) > 0.02f)
+            {
+                ball.transform.position = Vector3.MoveTowards(
+                    ball.transform.position,
+                    funnelExitPoint.position,
+                    funnelMoveSpeed * Time.deltaTime);
+                yield return null;
+            }
+
+            while (ball != null)
+            {
+                int slotIndex = FindNearestFreeSplineSlot(funnelExitPoint.position);
+                bool slotNearExit = slotIndex >= 0 &&
+                    Vector3.Distance(splineConveyorBelt.GetSlotWorldPosition(slotIndex), funnelExitPoint.position) <= slotCatchDistance;
+
+                if (queue.Count < GetBeltCapacity() && slotNearExit)
+                {
+                    AttachBallToSlot(ball, slotIndex);
+                    yield break;
+                }
+
+                yield return null;
+            }
         }
 
         private void TryAddPendingBalls()
@@ -114,13 +158,8 @@ namespace PopSort
             while (pendingBalls.Count > 0 && queue.Count < GetBeltCapacity())
             {
                 Ball pendingBall = pendingBalls[0];
-                int slotIndex = FindNearestFreeSplineSlot(pendingBall.transform.position);
-                if (slotIndex < 0) return;
-
                 pendingBalls.RemoveAt(0);
-                splineConveyorBelt.AttachObjectToSlot(pendingBall.transform, slotIndex);
-                occupiedSplineSlots.Add(slotIndex);
-                queue.Add(new QueuedBall(pendingBall, slotIndex));
+                StartCoroutine(HoldAtFunnelExit(pendingBall));
             }
         }
 
