@@ -10,8 +10,8 @@ namespace PopSort.EditorTools
         private const string DefaultLevelFolder = "Assets/Game/Data/Levels";
 
         private LevelData levelData;
-        private int gridWidth = 5;
-        private int gridHeight = 5;
+        private int gridWidth = 3;
+        private int gridHeight = 3;
         private int activeColorId;
         private int selectedPoolColorIndex;
         private int selectedCellX = -1;
@@ -86,7 +86,7 @@ namespace PopSort.EditorTools
             levelData.beltSlotCount = Mathf.Max(1, EditorGUILayout.IntField("Belt Slot Count", levelData.beltSlotCount));
             levelData.slotsPerTray = Mathf.Max(1, EditorGUILayout.IntField("Slots Per Tray", levelData.slotsPerTray));
             levelData.maxTrayColumnCount = Mathf.Clamp(
-                EditorGUILayout.IntField("Max Tray Columns", levelData.maxTrayColumnCount), 2, 4);
+                EditorGUILayout.IntField("Max Tray Columns", levelData.maxTrayColumnCount), 2, 3);
 
             if (difficultyChanged)
             {
@@ -141,6 +141,8 @@ namespace PopSort.EditorTools
                             levelData.trayAssets[i], typeof(Sprite), false, GUILayout.Width(60f));
                         levelData.holderAssets[i] = (Sprite)EditorGUILayout.ObjectField(
                             levelData.holderAssets[i], typeof(Sprite), false, GUILayout.Width(60f));
+                        levelData.blockAssets[i] = (Sprite)EditorGUILayout.ObjectField(
+                            levelData.blockAssets[i], typeof(Sprite), false, GUILayout.Width(60f));
                         if (GUILayout.Toggle(activeColorId == i, $"Color {i}", "Button", GUILayout.Width(80f)))
                         {
                             activeColorId = i;
@@ -208,15 +210,18 @@ namespace PopSort.EditorTools
             if (colorPool.colors == null || colorIndex < 0 || colorIndex >= colorPool.colors.Count) return;
 
             ColorConfig config = colorPool.colors[colorIndex];
-            if (config == null || config.id < 0) return;
+            if (config == null) return;
 
             Undo.RecordObject(levelData, "Add Color To Level Palette");
-            levelData.colorCount = Mathf.Max(levelData.colorCount, config.id + 1);
+            // Append at the next free local slot; the pool entry's id is unrelated to this level's slot index.
+            int newColorId = levelData.colorCount;
+            levelData.colorCount = newColorId + 1;
             EnsurePaletteSize();
-            levelData.popAssets[config.id] = config.popBalls;
-            levelData.trayAssets[config.id] = config.trayAsset;
-            levelData.holderAssets[config.id] = config.popHolder;
-            activeColorId = config.id;
+            levelData.popAssets[newColorId] = config.popBalls;
+            levelData.trayAssets[newColorId] = config.trayAsset;
+            levelData.holderAssets[newColorId] = config.popHolder;
+            levelData.blockAssets[newColorId] = config.blockAsset;
+            activeColorId = newColorId;
             EditorUtility.SetDirty(levelData);
         }
 
@@ -298,16 +303,20 @@ namespace PopSort.EditorTools
         private void DrawGridCell(int x, int y)
         {
             GridCell cell = levelData.rows[y].cells[x];
+            Sprite cellSprite = cell.enabled ? levelData.GetPopAsset(cell.colorId) : null;
+
             Color oldColor = GUI.backgroundColor;
-            GUI.backgroundColor = cell.enabled && levelData.colorPalette != null && levelData.colorPalette.Length > 0
-                ? levelData.GetColor(Mathf.Clamp(cell.colorId, 0, levelData.colorPalette.Length - 1))
-                : Color.gray;
+            GUI.backgroundColor = cellSprite != null
+                ? Color.white
+                : cell.enabled && levelData.colorPalette != null && levelData.colorPalette.Length > 0
+                    ? levelData.GetColor(Mathf.Clamp(cell.colorId, 0, levelData.colorPalette.Length - 1))
+                    : Color.gray;
 
             Rect rect = GUILayoutUtility.GetRect(CellSize, CellSize, GUILayout.Width(CellSize), GUILayout.Height(CellSize));
             string label = cell.enabled
                 ? Mathf.Max(1, cell.ballCount) > 1 ? $"{cell.colorId} x{Mathf.Max(1, cell.ballCount)}" : cell.colorId.ToString()
                 : "";
-            if (GUI.Button(rect, label))
+            if (GUI.Button(rect, cellSprite == null ? new GUIContent(label) : GUIContent.none))
             {
                 Undo.RecordObject(levelData, "Paint Grid Cell");
                 cell.enabled = true;
@@ -317,6 +326,12 @@ namespace PopSort.EditorTools
                 selectedCellX = x;
                 selectedCellY = y;
                 EditorUtility.SetDirty(levelData);
+            }
+
+            if (cellSprite != null)
+            {
+                DrawSpritePreview(rect, cellSprite);
+                GUI.Label(rect, label, EditorStyles.centeredGreyMiniLabel);
             }
 
             Event current = Event.current;
@@ -330,6 +345,19 @@ namespace PopSort.EditorTools
             }
 
             GUI.backgroundColor = oldColor;
+        }
+
+        // Draws the sprite's actual source rect so packed/atlased sprites render correctly.
+        private static void DrawSpritePreview(Rect rect, Sprite sprite)
+        {
+            if (sprite == null || sprite.texture == null) return;
+
+            Rect texCoords = new Rect(
+                sprite.rect.x / sprite.texture.width,
+                sprite.rect.y / sprite.texture.height,
+                sprite.rect.width / sprite.texture.width,
+                sprite.rect.height / sprite.texture.height);
+            GUI.DrawTextureWithTexCoords(rect, sprite.texture, texCoords);
         }
 
         private void DrawBallCountSection()
@@ -430,7 +458,7 @@ namespace PopSort.EditorTools
                     parameters.usefulBallUnlockDepth = 1;
                     parameters.colourRepetition = 1f;
                     parameters.verticalColourClustering = 1f;
-                    parameters.preferredTrayColumnCount = 4;
+                    parameters.preferredTrayColumnCount = 3;
                     break;
                 case LevelDifficulty.Medium:
                     parameters.maxCanonicalConveyorPressure = 0.4f;
@@ -535,9 +563,9 @@ namespace PopSort.EditorTools
         {
             switch (difficulty)
             {
-                case LevelDifficulty.Medium: return 6;
-                case LevelDifficulty.Hard: return 9;
-                case LevelDifficulty.SuperHard: return 12;
+                case LevelDifficulty.Medium: return 4;
+                case LevelDifficulty.Hard: return 5;
+                case LevelDifficulty.SuperHard: return 6;
                 default: return 3;
             }
         }
@@ -654,6 +682,16 @@ namespace PopSort.EditorTools
                 for (int i = 0; i < size && oldAssets != null && i < oldAssets.Length; i++)
                 {
                     levelData.holderAssets[i] = oldAssets[i];
+                }
+            }
+
+            if (levelData.blockAssets == null || levelData.blockAssets.Length != size)
+            {
+                Sprite[] oldAssets = levelData.blockAssets;
+                levelData.blockAssets = new Sprite[size];
+                for (int i = 0; i < size && oldAssets != null && i < oldAssets.Length; i++)
+                {
+                    levelData.blockAssets[i] = oldAssets[i];
                 }
             }
 

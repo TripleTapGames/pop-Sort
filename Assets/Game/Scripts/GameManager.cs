@@ -14,14 +14,15 @@ namespace PopSort
         [SerializeField] private GridManager gridManager;
         [SerializeField] private TrayManager trayManager;
         [SerializeField] private BeltQueueManager beltQueueManager;
+        [SerializeField] private BallPool ballPool;
         [SerializeField] private TapInputManager tapInputManager;
         [SerializeField] private LevelData[] levelSequence;
         [SerializeField] private int levelNumber = 1;
+        [SerializeField] private GameWin gameWinPanel;
+        [SerializeField] private GameLoose gameLoosePanel;
 
         public GameState State { get; private set; } = GameState.Playing;
         public LevelData CurrentLevel { get; private set; }
-
-        private bool gridCleared;
 
         private void Start()
         {
@@ -30,13 +31,11 @@ namespace PopSort
 
         private void OnEnable()
         {
-            if (gridManager != null) gridManager.OnGridCleared += HandleGridCleared;
             if (beltQueueManager != null) beltQueueManager.OnOverflow += HandleOverflow;
         }
 
         private void OnDisable()
         {
-            if (gridManager != null) gridManager.OnGridCleared -= HandleGridCleared;
             if (beltQueueManager != null) beltQueueManager.OnOverflow -= HandleOverflow;
         }
 
@@ -44,20 +43,14 @@ namespace PopSort
         {
             if (State != GameState.Playing) return;
 
-            // Win only once every popped ball has also been resolved into a tray.
-            if (gridCleared && beltQueueManager != null && beltQueueManager.QueueCount == 0 &&
-                trayManager != null && trayManager.AreAllTraysComplete())
+            // Win as soon as every tray is filled.
+            if (trayManager != null && trayManager.AreAllTraysComplete())
             {
                 State = GameState.Won;
                 if (tapInputManager != null) tapInputManager.enabled = false;
-                beltQueueManager.SetBeltMoving(false);
-                Debug.Log("You Win!");
+                beltQueueManager?.SetBeltMoving(false);
+                gameWinPanel?.Show(LoadNextLevel);
             }
-        }
-
-        private void HandleGridCleared()
-        {
-            gridCleared = true;
         }
 
         private void HandleOverflow()
@@ -67,40 +60,34 @@ namespace PopSort
             State = GameState.Lost;
             if (tapInputManager != null) tapInputManager.enabled = false;
             beltQueueManager?.SetBeltMoving(false);
-            Debug.Log("Game Over");
+            gameLoosePanel?.Show(() => LoadLevel(levelNumber - 1));
         }
 
         private void OnGUI()
         {
             GUI.Label(new Rect(20f, 20f, 240f, 40f), $"Level {levelNumber}", GUI.skin.GetStyle("label"));
-            if (State == GameState.Playing) return;
-
-            float width = 300f;
-            float height = 160f;
-            Rect popup = new Rect((Screen.width - width) * 0.5f, (Screen.height - height) * 0.5f, width, height);
-            GUI.Box(popup, State == GameState.Won ? "Level Complete" : "Level Failed");
-
-            Rect button = new Rect(popup.x + 70f, popup.y + 90f, 160f, 36f);
-            if (State == GameState.Won)
-            {
-                if (GUI.Button(button, "Next")) LoadNextLevel();
-            }
-            else if (GUI.Button(button, "Retry"))
-            {
-                LoadLevel(levelNumber - 1);
-            }
         }
 
         private void LoadNextLevel()
         {
-            int nextIndex = levelNumber;
-            if (levelSequence == null || nextIndex < 0 || nextIndex >= levelSequence.Length || levelSequence[nextIndex] == null)
+            if (levelSequence == null || levelSequence.Length == 0)
             {
-                Debug.Log("No next level is configured.", this);
+                Debug.Log("No levels are configured.", this);
                 return;
             }
 
-            LoadLevel(nextIndex);
+            // Wrap back to the first level once the sequence ends, skipping any empty slots.
+            for (int offset = 0; offset < levelSequence.Length; offset++)
+            {
+                int candidateIndex = (levelNumber + offset) % levelSequence.Length;
+                if (levelSequence[candidateIndex] != null)
+                {
+                    LoadLevel(candidateIndex);
+                    return;
+                }
+            }
+
+            Debug.LogError("Level sequence has no valid levels.", this);
         }
 
         private void LoadLevel(int sequenceIndex)
@@ -119,9 +106,12 @@ namespace PopSort
             }
 
             State = GameState.Playing;
-            gridCleared = false;
             CurrentLevel = nextLevel;
+            gameWinPanel?.Hide();
+            gameLoosePanel?.Hide();
             if (tapInputManager != null) tapInputManager.enabled = false;
+            // Releases balls in transient states (e.g. still falling) that no subsystem list tracks.
+            ballPool?.ReleaseAll();
             beltQueueManager?.ClearQueue();
             gridManager?.ClearGrid();
             trayManager?.LoadLevelData(nextLevel);

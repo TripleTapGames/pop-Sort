@@ -12,108 +12,84 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: d3eaf2cdb927342128e9bac4c7e4b40e, type: 3}
   m_Name: Level_3
   m_EditorClassIdentifier: 
-  difficulty: 0
+  difficulty: 1
   rows:
   - cells:
-    - enabled: 1
-      colorId: 0
-      ballCount: 3
-    - enabled: 1
-      colorId: 2
-      ballCount: 2
-    - enabled: 1
-      colorId: 1
-      ballCount: 1
-    - enabled: 1
-      colorId: 2
-      ballCount: 2
-    - enabled: 1
-      colorId: 1
-      ballCount: 1
-  - cells:
-    - enabled: 1
-      colorId: 2
-      ballCount: 2
     - enabled: 0
       colorId: 0
       ballCount: 0
     - enabled: 1
-      colorId: 2
-      ballCount: 2
-    - enabled: 1
-      colorId: 0
+      colorId: 1
       ballCount: 3
-    - enabled: 1
+    - enabled: 0
       colorId: 0
+      ballCount: 0
+    - enabled: 1
+      colorId: 1
       ballCount: 3
   - cells:
     - enabled: 1
       colorId: 1
-      ballCount: 1
+      ballCount: 3
     - enabled: 1
       colorId: 2
-      ballCount: 2
+      ballCount: 6
     - enabled: 1
       colorId: 2
-      ballCount: 2
+      ballCount: 6
     - enabled: 1
-      colorId: 2
-      ballCount: 2
-    - enabled: 1
-      colorId: 2
-      ballCount: 2
+      colorId: 1
+      ballCount: 3
   - cells:
     - enabled: 1
       colorId: 2
-      ballCount: 2
+      ballCount: 6
     - enabled: 1
       colorId: 1
-      ballCount: 1
-    - enabled: 1
-      colorId: 0
-      ballCount: 3
-    - enabled: 1
-      colorId: 0
       ballCount: 3
     - enabled: 1
       colorId: 2
-      ballCount: 2
+      ballCount: 6
+    - enabled: 1
+      colorId: 2
+      ballCount: 6
   - cells:
     - enabled: 1
       colorId: 1
-      ballCount: 1
-    - enabled: 1
-      colorId: 2
-      ballCount: 2
-    - enabled: 1
-      colorId: 0
       ballCount: 3
     - enabled: 1
-      colorId: 1
-      ballCount: 1
-    - enabled: 1
       colorId: 2
-      ballCount: 2
+      ballCount: 6
+    - enabled: 0
+      colorId: 0
+      ballCount: 0
+    - enabled: 0
+      colorId: 0
+      ballCount: 0
   colorPalette:
   - {r: 1, g: 0.14999998, b: 0.14999998, a: 1}
-  - {r: 0.575, g: 1, b: 0.14999998, a: 1}
   - {r: 0.14999998, g: 1, b: 1, a: 1}
+  - {r: 0.14999998, g: 0.14999998, b: 1, a: 1}
   popAssets:
-  - {fileID: 21300000, guid: 33d01ec8787a744878699ffc2846ceaa, type: 3}
+  - {fileID: 0}
   - {fileID: 21300000, guid: 54a9206e6fc314bc1be517a35596af7c, type: 3}
   - {fileID: 21300000, guid: 0e0a73a965e6d4b10a91717435df476d, type: 3}
   trayAssets:
-  - {fileID: 21300000, guid: f3342d78f138743238146624055b0bd5, type: 3}
+  - {fileID: 0}
   - {fileID: 21300000, guid: ee157900fca744b5da9fde2461e589d0, type: 3}
   - {fileID: 21300000, guid: d46c36237ff064bedaa444b337ffed23, type: 3}
   holderAssets:
-  - {fileID: 21300000, guid: b3d647badf2b74936b0c0f940fbad891, type: 3}
-  - {fileID: 21300000, guid: 20a392eafe5d34f82a6b9441c62d348d, type: 3}
-  - {fileID: 21300000, guid: b3a6f70575aa44fce97f4ece5ecc19a3, type: 3}
+  - {fileID: 0}
+  - {fileID: 21300000, guid: 47cfbac975f7c4c5d850e58b7f4c5270, type: 3}
+  - {fileID: 21300000, guid: c76215d1e47c94576add03602d328d3a, type: 3}
+  blockAssets:
+  - {fileID: 0}
+  - {fileID: 21300000, guid: 1abe92b9f772c4ebf8da0a7cb309b685, type: 3}
+  - {fileID: 21300000, guid: d09d19002f3e84f26b828622829c9d91, type: 3}
   colorCount: 3
   beltSpeed: 0.2
   slotsPerTray: 6
-  beltSlotCount: 7
+  beltSlotCount: 10
   maxTrayColumnCount: 3
   trayColumns:
   - trays:
@@ -121,24 +97,26 @@ MonoBehaviour:
       capacity: 6
     - colorId: 2
       capacity: 6
-    - colorId: 0
+    - colorId: 2
       capacity: 6
   - trays:
-    - colorId: 2
+    - colorId: 1
       capacity: 6
     - colorId: 2
       capacity: 6
-    - colorId: 0
+    - colorId: 2
       capacity: 6
   - trays:
+    - colorId: 1
+      capacity: 6
     - colorId: 2
       capacity: 6
-    - colorId: 0
+    - colorId: 2
       capacity: 6
   difficultyParameters:
-    maxCanonicalConveyorPressure: 0.25
-    forcedReliefThreshold: 0.15
-    usefulBallUnlockDepth: 1
-    colourRepetition: 1
-    verticalColourClustering: 1
-    preferredTrayColumnCount: 4
+    maxCanonicalConveyorPressure: 0.4
+    forcedReliefThreshold: 0.3
+    usefulBallUnlockDepth: 2
+    colourRepetition: 0.65
+    verticalColourClustering: 0.65
+    preferredTrayColumnCount: 3
