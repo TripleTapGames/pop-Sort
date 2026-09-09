@@ -41,7 +41,12 @@ namespace PopSort
 
         private void OnGetBall(Ball ball) => ball.gameObject.SetActive(true);
 
-        private void OnReleaseBall(Ball ball) => ball.gameObject.SetActive(false);
+        private void OnReleaseBall(Ball ball)
+        {
+            ball.PrepareForPool();
+            ball.transform.SetParent(transform, false);
+            ball.gameObject.SetActive(false);
+        }
 
         private void OnDestroyBall(Ball ball) => Destroy(ball.gameObject);
     }

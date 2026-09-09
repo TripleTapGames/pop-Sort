@@ -71,6 +71,7 @@ namespace PopSort
             rb.velocity = Vector2.zero; // clear leftover motion from a previous pooled life (e.g. reused mid-flight on retry)
             rb.angularVelocity = 0f;
             rb.simulated = true; // kinematic + simulated keeps the collider visible to Physics2D queries (tap detection)
+            col.enabled = true;
             col.isTrigger = true;
         }
 
@@ -188,6 +189,14 @@ namespace PopSort
         public void SetInTray()
         {
             State = BallState.InTray;
+        }
+
+        public void PrepareForPool()
+        {
+            rb.velocity = Vector2.zero;
+            rb.angularVelocity = 0f;
+            rb.simulated = false;
+            col.enabled = false;
         }
     }
 }

@@ -58,6 +58,8 @@ namespace PopSort
 
         public void ClearBalls()
         {
+            StopAllCoroutines();
+
             foreach (Ball placed in placedBalls)
             {
                 ballPool.Release(placed);

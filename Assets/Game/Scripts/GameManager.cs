@@ -110,11 +110,11 @@ namespace PopSort
             gameWinPanel?.Hide();
             gameLoosePanel?.Hide();
             if (tapInputManager != null) tapInputManager.enabled = false;
-            // Releases balls in transient states (e.g. still falling) that no subsystem list tracks.
-            ballPool?.ReleaseAll();
             beltQueueManager?.ClearQueue();
             gridManager?.ClearGrid();
             trayManager?.LoadLevelData(nextLevel);
+            // Releases balls in transient states (e.g. still falling) that no subsystem list tracks.
+            ballPool?.ReleaseAll();
             beltQueueManager?.SetLevelData(nextLevel);
             gridManager?.SpawnGridFromLevelData(nextLevel);
             levelNumber = sequenceIndex + 1;

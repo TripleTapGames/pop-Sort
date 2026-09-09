@@ -27,6 +27,7 @@ namespace PopSort
         public void SetLevelData(LevelData newLevelData)
         {
             levelData = newLevelData;
+            isProcessingQueue = true;
             if (splineConveyorBelt != null)
             {
                 splineConveyorBelt.SetSlotCount(levelData.beltSlotCount);
@@ -37,6 +38,7 @@ namespace PopSort
 
         public void SetBeltMoving(bool shouldMove)
         {
+            isProcessingQueue = shouldMove;
             if (splineConveyorBelt != null) splineConveyorBelt.SetMoving(shouldMove);
         }
 
@@ -76,6 +78,7 @@ namespace PopSort
         private readonly List<Ball> funnelWaitingBalls = new List<Ball>();
         private readonly HashSet<int> occupiedSplineSlots = new HashSet<int>();
         private float noMatchElapsedTime;
+        private bool isProcessingQueue;
 
         private void Start()
         {
@@ -84,6 +87,8 @@ namespace PopSort
 
         public void HandleBallLanded(Ball ball)
         {
+            if (!isProcessingQueue) return;
+
             if (splineConveyorBelt == null || trayManager == null || trayManager.ColumnCount == 0)
             {
                 Debug.LogError("BeltQueueManager requires Spline Conveyor Belt and tray column pickup points.", this);
@@ -104,6 +109,8 @@ namespace PopSort
 
         private void Update()
         {
+            if (!isProcessingQueue) return;
+
             TryCollectBallsAtPickup();
             TryAddPendingBalls();
             UpdateFunnelWaitingBalls();
@@ -130,6 +137,7 @@ namespace PopSort
 
         private void AttachBallToSlot(Ball ball, int slotIndex)
         {
+            ball.SetQueued();
             splineConveyorBelt.AttachObjectToSlot(ball.transform, slotIndex, resetLocalPosition: false);
             occupiedSplineSlots.Add(slotIndex);
             queue.Add(new QueuedBall(ball, slotIndex, isSeated: false));
