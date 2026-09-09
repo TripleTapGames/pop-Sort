@@ -13,6 +13,9 @@ namespace PopSort
         [SerializeField] private Transform column2PickupPoint;
         [SerializeField] private Transform column3PickupPoint;
         [SerializeField] private float generatedRowSpacing = 1.1f;
+
+        [Header("Ball Landing Motion")]
+        [SerializeField] private TrayLandingSettings trayLandingSettings = TrayLandingSettings.CreateDefault();
         private TrayColumn[] trayColumns;
 
         private readonly List<GameObject> generatedObjects = new List<GameObject>();
@@ -59,7 +62,8 @@ namespace PopSort
                         trays[trayIndex].colorId,
                         trays[trayIndex].capacity,
                         levelData.GetTrayAsset(trays[trayIndex].colorId),
-                        ballPool);
+                        ballPool,
+                        trayLandingSettings);
                     spawnedSlots[trayIndex] = traySlot;
                     spawnedTrayCount++;
                 }

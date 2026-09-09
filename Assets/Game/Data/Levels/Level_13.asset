@@ -153,10 +153,11 @@ MonoBehaviour:
   - {fileID: 21300000, guid: 2bd25073761ba46a3821ce413211af9b, type: 3}
   - {fileID: 21300000, guid: e9d1b195328c74e039078b83103503b8, type: 3}
   - {fileID: 21300000, guid: 06ee50b4958d24bfd871248dd5fa2d7e, type: 3}
+  pressedAssets: []
   colorCount: 4
-  beltSpeed: 0.2
-  slotsPerTray: 6
-  beltSlotCount: 10
+  beltSpeed: 0.4
+  slotsPerTray: 3
+  beltSlotCount: 20
   maxTrayColumnCount: 2
   trayColumns:
   - trays:

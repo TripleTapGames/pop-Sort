@@ -13,7 +13,13 @@ namespace PopSort
         [SerializeField] private Transform gridOrigin;
         [SerializeField] private float cellSize = 1f;
         [SerializeField] private float memberOffsetRadius = 0.08f;
+
+        [Header("Marble Pop Motion")]
         [SerializeField] private float burstVelocity = 0.35f;
+        [SerializeField] private Vector2 burstDirection = new Vector2(0f, -1f);
+        [SerializeField, Range(0f, 180f)] private float burstSpreadAngle = 55f;
+        [SerializeField, Min(0f)] private float minimumBurstSpeedMultiplier = 0.8f;
+        [SerializeField, Min(0f)] private float maximumBurstSpeedMultiplier = 1.2f;
         [SerializeField] private float burstAngularVelocity = 90f;
 
         public event Action OnGridCleared;
@@ -166,7 +172,13 @@ namespace PopSort
 
         private Vector2 RandomBurstVelocity()
         {
-            return UnityEngine.Random.insideUnitCircle.normalized * burstVelocity;
+            Vector2 direction = burstDirection.sqrMagnitude > 0.0001f ? burstDirection.normalized : Vector2.down;
+            float angle = UnityEngine.Random.Range(-burstSpreadAngle, burstSpreadAngle);
+            direction = (Vector2)(Quaternion.Euler(0f, 0f, angle) * direction);
+
+            float minSpeed = Mathf.Min(minimumBurstSpeedMultiplier, maximumBurstSpeedMultiplier);
+            float maxSpeed = Mathf.Max(minimumBurstSpeedMultiplier, maximumBurstSpeedMultiplier);
+            return direction * burstVelocity * UnityEngine.Random.Range(minSpeed, maxSpeed);
         }
 
         private float RandomBurstAngularVelocity()

@@ -17,7 +17,9 @@ namespace PopSort
         [SerializeField] private float funnelMoveSpeed = 6f;
         [SerializeField] private float slotCatchDistance = 0.35f;
         [SerializeField] private float funnelQueueSpacing = 0.5f;
-        [SerializeField] private float seatToSlotSpeed = 100f;
+        [Header("Belt Entry Motion")]
+        [SerializeField, Min(0f)] private float seatToSlotDuration = 0.12f;
+        [SerializeField] private AnimationCurve seatToSlotCurve = AnimationCurve.EaseInOut(0f, 0f, 1f, 1f);
         [SerializeField] private float funnelExitTolerance = 0.2f;
         [Tooltip("Radius around the funnel outlet that hands falling balls to the funnel queue before they can jam on the physical lip.")]
         [SerializeField] private float funnelCaptureRadius = 1.2f;
@@ -169,7 +171,7 @@ namespace PopSort
             ball.SetQueued();
             splineConveyorBelt.AttachObjectToSlot(ball.transform, slotIndex, resetLocalPosition: false);
             occupiedSplineSlots.Add(slotIndex);
-            queue.Add(new QueuedBall(ball, slotIndex, isSeated: false));
+            queue.Add(new QueuedBall(ball, slotIndex, false, ball.transform.localPosition, 0f));
         }
 
         private void TryAddPendingBalls()
@@ -315,17 +317,12 @@ namespace PopSort
                 QueuedBall queuedBall = queue[i];
                 if (!queuedBall.IsSeated)
                 {
-                    queuedBall.Ball.transform.localPosition = Vector3.MoveTowards(
-                        queuedBall.Ball.transform.localPosition,
-                        Vector3.zero,
-                        seatToSlotSpeed * Time.deltaTime);
-
-                    if (queuedBall.Ball.transform.localPosition.sqrMagnitude > 0.0001f)
+                    queuedBall = queuedBall.AdvanceSeat(Time.deltaTime, seatToSlotDuration, seatToSlotCurve);
+                    queue[i] = queuedBall;
+                    if (!queuedBall.IsSeated)
                     {
                         continue;
                     }
-
-                    queue[i] = queuedBall.Seat();
                 }
 
                 if (!TryCollectBallAtColumnPickup(queuedBall))
@@ -360,15 +357,34 @@ namespace PopSort
             public readonly Ball Ball;
             public readonly int SplineSlotIndex;
             public readonly bool IsSeated;
+            private readonly Vector3 seatStartLocalPosition;
+            private readonly float seatElapsed;
 
-            public QueuedBall(Ball ball, int splineSlotIndex, bool isSeated)
+            public QueuedBall(Ball ball, int splineSlotIndex, bool isSeated, Vector3 seatStartLocalPosition, float seatElapsed)
             {
                 Ball = ball;
                 SplineSlotIndex = splineSlotIndex;
                 IsSeated = isSeated;
+                this.seatStartLocalPosition = seatStartLocalPosition;
+                this.seatElapsed = seatElapsed;
             }
 
-            public QueuedBall Seat() => new QueuedBall(Ball, SplineSlotIndex, true);
+            public QueuedBall AdvanceSeat(float deltaTime, float duration, AnimationCurve curve)
+            {
+                if (Ball == null) return new QueuedBall(null, SplineSlotIndex, true, Vector3.zero, 0f);
+
+                if (duration <= 0f)
+                {
+                    Ball.transform.localPosition = Vector3.zero;
+                    return new QueuedBall(Ball, SplineSlotIndex, true, Vector3.zero, 0f);
+                }
+
+                float elapsed = seatElapsed + deltaTime;
+                float normalizedTime = Mathf.Clamp01(elapsed / duration);
+                float progress = curve != null ? Mathf.Clamp01(curve.Evaluate(normalizedTime)) : normalizedTime;
+                Ball.transform.localPosition = Vector3.Lerp(seatStartLocalPosition, Vector3.zero, progress);
+                return new QueuedBall(Ball, SplineSlotIndex, normalizedTime >= 1f, seatStartLocalPosition, elapsed);
+            }
         }
     }
 }

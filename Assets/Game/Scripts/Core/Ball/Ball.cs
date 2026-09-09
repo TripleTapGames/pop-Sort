@@ -10,6 +10,7 @@ namespace PopSort
         Falling,
         FunnelWaiting,
         Queued,
+        TrayLanding,
         InTray
     }
 
@@ -18,7 +19,11 @@ namespace PopSort
     {
         [SerializeField] private TextMeshProUGUI countLabel;
         [SerializeField] private AudioClip popSfx;
+
+        [Header("Marble Flight")]
         [SerializeField] private float gravityScale = 1.5f;
+        [SerializeField, Range(0f, 1f)] private float bounceRetention = 0.22f;
+        [SerializeField, Min(0f)] private float minimumBounceSpeed = 0.35f;
 
         public int ColorId { get; private set; }
         public BallState State { get; private set; }
@@ -203,7 +208,37 @@ namespace PopSort
 
         public void SetInTray()
         {
+            FinishTrayLanding();
+        }
+
+        // Removes the ball from belt/physics control while TraySlot guides it into place.
+        public void BeginTrayLanding()
+        {
+            transform.SetParent(null, true);
+            State = BallState.TrayLanding;
+            rb.velocity = Vector2.zero;
+            rb.angularVelocity = 0f;
+            rb.simulated = false;
+            rb.bodyType = RigidbodyType2D.Kinematic;
+            col.enabled = false;
+        }
+
+        public void FinishTrayLanding()
+        {
             State = BallState.InTray;
+            rb.velocity = Vector2.zero;
+            rb.angularVelocity = 0f;
+            rb.simulated = false;
+            col.enabled = false;
+            RestorePrefabScale();
+        }
+
+        public void SetVisualScaleMultiplier(Vector2 multiplier)
+        {
+            transform.localScale = new Vector3(
+                prefabLocalScale.x * multiplier.x,
+                prefabLocalScale.y * multiplier.y,
+                prefabLocalScale.z);
         }
 
         public void PrepareForPool()
@@ -218,6 +253,17 @@ namespace PopSort
         private void RestorePrefabScale()
         {
             transform.localScale = prefabLocalScale;
+        }
+
+        private void OnCollisionEnter2D(Collision2D collision)
+        {
+            if (State != BallState.Falling || collision.contactCount == 0) return;
+
+            ContactPoint2D contact = collision.GetContact(0);
+            float impactSpeed = -Vector2.Dot(collision.relativeVelocity, contact.normal);
+            if (impactSpeed < minimumBounceSpeed) return;
+
+            rb.velocity = Vector2.Reflect(collision.relativeVelocity, contact.normal) * bounceRetention;
         }
     }
 }
