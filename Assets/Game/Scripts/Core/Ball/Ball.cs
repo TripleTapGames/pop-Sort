@@ -25,6 +25,10 @@ namespace PopSort
         [SerializeField, Range(0f, 1f)] private float bounceRetention = 0.22f;
         [SerializeField, Min(0f)] private float minimumBounceSpeed = 0.35f;
 
+        [Header("Belt Visual Polish")]
+        [SerializeField, Min(0f)] private float queuedWobbleAngle = 1.5f;
+        [SerializeField, Min(0f)] private float queuedWobbleSpeed = 7f;
+
         public int ColorId { get; private set; }
         public BallState State { get; private set; }
         public object Group { get; private set; }
@@ -40,6 +44,9 @@ namespace PopSort
 
         private AudioSource audioSource;
         private Vector3 prefabLocalScale;
+        private Vector3 visualBaseLocalScale;
+        private float queueWobblePhase;
+        private Coroutine scaleFeedbackRoutine;
 
         public void PopBurstFromState(Vector2 velocity, float angularVelocity)
         {
@@ -61,6 +68,15 @@ namespace PopSort
             sr = GetComponent<SpriteRenderer>();
             audioSource = GetComponent<AudioSource>();
             prefabLocalScale = transform.localScale;
+            visualBaseLocalScale = prefabLocalScale;
+        }
+
+        private void Update()
+        {
+            if (State != BallState.Queued) return;
+
+            float angle = Mathf.Sin(Time.time * queuedWobbleSpeed + queueWobblePhase) * queuedWobbleAngle;
+            transform.localRotation = Quaternion.Euler(0f, 0f, angle);
         }
 
         // Called each time this instance is (re)used from the pool for a fresh grid spawn.
@@ -173,6 +189,23 @@ namespace PopSort
             rb.simulated = false;
             rb.bodyType = RigidbodyType2D.Kinematic;
             col.isTrigger = true;
+            queueWobblePhase = UnityEngine.Random.value * Mathf.PI * 2f;
+        }
+
+        // Call after changing parent when visual feedback must preserve world scale.
+        public void CaptureVisualBaseScale()
+        {
+            visualBaseLocalScale = transform.localScale;
+        }
+
+        public void PlayLaunchPunch(float duration, float strength)
+        {
+            PlayScalePunch(duration, strength);
+        }
+
+        public void PlayBeltSettle(float duration, float strength)
+        {
+            PlayScalePunch(duration, strength);
         }
 
         public void SetFunnelKinematic()
@@ -215,6 +248,7 @@ namespace PopSort
         public void BeginTrayLanding()
         {
             transform.SetParent(null, true);
+            CaptureVisualBaseScale();
             State = BallState.TrayLanding;
             rb.velocity = Vector2.zero;
             rb.angularVelocity = 0f;
@@ -230,19 +264,21 @@ namespace PopSort
             rb.angularVelocity = 0f;
             rb.simulated = false;
             col.enabled = false;
-            RestorePrefabScale();
+            RestoreVisualScale();
         }
 
         public void SetVisualScaleMultiplier(Vector2 multiplier)
         {
             transform.localScale = new Vector3(
-                prefabLocalScale.x * multiplier.x,
-                prefabLocalScale.y * multiplier.y,
-                prefabLocalScale.z);
+                visualBaseLocalScale.x * multiplier.x,
+                visualBaseLocalScale.y * multiplier.y,
+                visualBaseLocalScale.z);
         }
 
         public void PrepareForPool()
         {
+            StopAllCoroutines();
+            scaleFeedbackRoutine = null;
             rb.velocity = Vector2.zero;
             rb.angularVelocity = 0f;
             rb.simulated = false;
@@ -253,6 +289,50 @@ namespace PopSort
         private void RestorePrefabScale()
         {
             transform.localScale = prefabLocalScale;
+            visualBaseLocalScale = prefabLocalScale;
+        }
+
+        private void RestoreVisualScale()
+        {
+            transform.localScale = visualBaseLocalScale;
+        }
+
+        private void PlayScalePunch(float duration, float strength)
+        {
+            if (scaleFeedbackRoutine != null) StopCoroutine(scaleFeedbackRoutine);
+            scaleFeedbackRoutine = StartCoroutine(ScalePunchRoutine(duration, strength));
+        }
+
+        private System.Collections.IEnumerator ScalePunchRoutine(float duration, float strength)
+        {
+            if (duration <= 0f || strength <= 0f)
+            {
+                RestoreVisualScale();
+                scaleFeedbackRoutine = null;
+                yield break;
+            }
+
+            Vector2 squash = new Vector2(1f + strength, 1f - strength);
+            float elapsed = 0f;
+            float squashDuration = duration * 0.35f;
+            while (elapsed < squashDuration)
+            {
+                elapsed += Time.deltaTime;
+                SetVisualScaleMultiplier(Vector2.Lerp(Vector2.one, squash, elapsed / squashDuration));
+                yield return null;
+            }
+
+            elapsed = 0f;
+            float restoreDuration = duration * 0.65f;
+            while (elapsed < restoreDuration)
+            {
+                elapsed += Time.deltaTime;
+                SetVisualScaleMultiplier(Vector2.Lerp(squash, Vector2.one, elapsed / restoreDuration));
+                yield return null;
+            }
+
+            RestoreVisualScale();
+            scaleFeedbackRoutine = null;
         }
 
         private void OnCollisionEnter2D(Collision2D collision)

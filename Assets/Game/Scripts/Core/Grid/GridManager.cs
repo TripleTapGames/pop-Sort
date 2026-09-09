@@ -22,6 +22,10 @@ namespace PopSort
         [SerializeField, Min(0f)] private float maximumBurstSpeedMultiplier = 1.2f;
         [SerializeField] private float burstAngularVelocity = 90f;
 
+        [Header("Marble Pop Polish")]
+        [SerializeField, Min(0f)] private float launchPunchDuration = 0.12f;
+        [SerializeField, Range(0f, 0.5f)] private float launchPunchStrength = 0.12f;
+
         public event Action OnGridCleared;
 
         private readonly List<Ball> aliveBalls = new List<Ball>();
@@ -167,6 +171,7 @@ namespace PopSort
             extraBall.transform.rotation = Quaternion.Euler(0f, 0f, UnityEngine.Random.Range(-15f, 15f));
             extraBall.Initialize(colorId, levelData.GetPopAsset(colorId), HandleBallPopped);
             extraBall.PopBurstFromState(RandomBurstVelocity(), RandomBurstAngularVelocity());
+            extraBall.PlayLaunchPunch(launchPunchDuration, launchPunchStrength);
             aliveBalls.Add(extraBall);
         }
 
@@ -282,6 +287,7 @@ namespace PopSort
                 holderDisplay?.SetCount(0);
                 holderDisplay?.SetPressed();
                 visibleBall.PopBurst(owner.RandomBurstVelocity(), owner.RandomBurstAngularVelocity());
+                visibleBall.PlayLaunchPunch(owner.launchPunchDuration, owner.launchPunchStrength);
 
                 for (int i = 0; i < remainingBalls; i++)
                 {

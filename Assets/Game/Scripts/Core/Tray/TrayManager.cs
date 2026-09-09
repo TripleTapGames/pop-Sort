@@ -40,9 +40,15 @@ namespace PopSort
 
         [Header("Ball Landing Motion")]
         [SerializeField] private TrayLandingSettings trayLandingSettings = TrayLandingSettings.CreateDefault();
+
+        [Header("Completion VFX")]
+        [SerializeField] private TrayCompletionVfx completionVfxPrefab;
+        [SerializeField, Min(0.01f)] private float completionVfxLifetime = 0.8f;
+        [SerializeField, Min(0.01f)] private float completionVfxScale = 1f;
         private TrayColumn[] trayColumns;
 
         private readonly List<GameObject> generatedObjects = new List<GameObject>();
+        private readonly List<TrayCompletionVfx> completionVfxInstances = new List<TrayCompletionVfx>();
 
         private void Start()
         {
@@ -87,7 +93,8 @@ namespace PopSort
                         trays[trayIndex].capacity,
                         levelData.GetTrayAsset(trays[trayIndex].colorId),
                         ballPool,
-                        trayLandingSettings);
+                        trayLandingSettings,
+                        PlayCompletionVfx);
                     spawnedSlots[trayIndex] = traySlot;
                     spawnedTrayCount++;
                 }
@@ -161,6 +168,8 @@ namespace PopSort
 
         public void ClearGeneratedTrays()
         {
+            StopCompletionVfx();
+
             if (trayColumns != null)
             {
                 foreach (TrayColumn column in trayColumns)
@@ -182,6 +191,35 @@ namespace PopSort
             ClearGeneratedTrays();
             SetLevelData(newLevelData);
             GenerateFromLevel();
+        }
+
+        private void PlayCompletionVfx(Vector3 position)
+        {
+            if (completionVfxPrefab == null) return;
+
+            TrayCompletionVfx vfx = GetAvailableCompletionVfx();
+            vfx.Play(position, completionVfxScale, completionVfxLifetime, null);
+        }
+
+        private TrayCompletionVfx GetAvailableCompletionVfx()
+        {
+            foreach (TrayCompletionVfx pooledInstance in completionVfxInstances)
+            {
+                if (pooledInstance != null && !pooledInstance.gameObject.activeSelf) return pooledInstance;
+            }
+
+            TrayCompletionVfx newInstance = Instantiate(completionVfxPrefab, transform);
+            newInstance.gameObject.SetActive(false);
+            completionVfxInstances.Add(newInstance);
+            return newInstance;
+        }
+
+        private void StopCompletionVfx()
+        {
+            foreach (TrayCompletionVfx instance in completionVfxInstances)
+            {
+                if (instance != null) instance.StopAndHide();
+            }
         }
 
         private float GetColumnPickupHalfWidth(int columnIndex)

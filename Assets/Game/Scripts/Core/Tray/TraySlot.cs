@@ -1,5 +1,6 @@
 using System.Collections;
 using System.Collections.Generic;
+using System;
 using UnityEngine;
 using UnityEngine.Events;
 
@@ -69,6 +70,7 @@ namespace PopSort
         private int activeLandingCount;
         private bool hasLoggedMissingSlotPosition;
         private TrayLandingSettings landingSettings;
+        private Action<Vector3> onCompletionVfx;
 
         private void OnValidate()
         {
@@ -81,13 +83,20 @@ namespace PopSort
             ApplyTrayColor();
         }
 
-        public void Configure(int colorId, int capacity, Sprite traySprite, BallPool ballPool, TrayLandingSettings landingSettings)
+        public void Configure(
+            int colorId,
+            int capacity,
+            Sprite traySprite,
+            BallPool ballPool,
+            TrayLandingSettings landingSettings,
+            Action<Vector3> completionVfxCallback)
         {
             this.colorId = colorId;
             this.capacity = Mathf.Max(capacity, 1);
             this.traySprite = traySprite;
             this.ballPool = ballPool;
             this.landingSettings = landingSettings;
+            onCompletionVfx = completionVfxCallback;
             placedBalls.Clear();
             hasReachedCapacity = false;
             lastLandingComplete = true;
@@ -135,6 +144,7 @@ namespace PopSort
         // Called by TrayColumn after the final ball has reached this tray.
         public void InvokeTrayFilled()
         {
+            onCompletionVfx?.Invoke(trayRoot != null ? trayRoot.position : transform.position);
             onTrayFilled?.Invoke();
         }
 
@@ -170,6 +180,7 @@ namespace PopSort
             // Keep landed balls visually attached to this tray through its slide,
             // filled, and disappearance animations.
             ball.transform.SetParent(trayRoot != null ? trayRoot : transform, true);
+            ball.CaptureVisualBaseScale();
             ball.FinishTrayLanding();
             yield return PlayLandingPunch(ball);
             activeLandingCount = Mathf.Max(0, activeLandingCount - 1);

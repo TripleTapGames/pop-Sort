@@ -169,6 +169,7 @@ namespace PopSort
         {
             ball.SetQueued();
             splineConveyorBelt.AttachObjectToSlot(ball.transform, slotIndex, resetLocalPosition: false);
+            ball.CaptureVisualBaseScale();
             occupiedSplineSlots.Add(slotIndex);
             queue.Add(new QueuedBall(ball, slotIndex, false, ball.transform.localPosition, 0f));
         }
@@ -377,6 +378,7 @@ namespace PopSort
                 float normalizedTime = Mathf.Clamp01(elapsed / duration);
                 float progress = curve != null ? Mathf.Clamp01(curve.Evaluate(normalizedTime)) : normalizedTime;
                 Ball.transform.localPosition = Vector3.Lerp(seatStartLocalPosition, Vector3.zero, progress);
+                if (normalizedTime >= 1f) Ball.PlayBeltSettle(0.1f, 0.06f);
                 return new QueuedBall(Ball, SplineSlotIndex, normalizedTime >= 1f, seatStartLocalPosition, elapsed);
             }
         }
