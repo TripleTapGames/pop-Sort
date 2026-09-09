@@ -68,6 +68,8 @@ namespace PopSort
             SetCount(1);
             State = BallState.InGrid;
             rb.bodyType = RigidbodyType2D.Kinematic;
+            rb.velocity = Vector2.zero; // clear leftover motion from a previous pooled life (e.g. reused mid-flight on retry)
+            rb.angularVelocity = 0f;
             rb.simulated = true; // kinematic + simulated keeps the collider visible to Physics2D queries (tap detection)
             col.isTrigger = true;
         }
