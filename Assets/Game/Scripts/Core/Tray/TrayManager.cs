@@ -1,5 +1,6 @@
 using System.Collections.Generic;
 using UnityEngine;
+using UnityEngine.Serialization;
 
 namespace PopSort
 {
@@ -12,6 +13,29 @@ namespace PopSort
         [SerializeField] private Transform column1PickupPoint;
         [SerializeField] private Transform column2PickupPoint;
         [SerializeField] private Transform column3PickupPoint;
+
+        [Header("Column Pickup Ranges")]
+        [Tooltip("Half the horizontal collection width for Column 1. A value of 0.5 accepts balls from 0.5 units left to right of the pickup point.")]
+        [FormerlySerializedAs("column1PickupRange")]
+        [SerializeField, Min(0f)] private float column1PickupHalfWidth = 0.5f;
+        [Tooltip("Vertical offset of Column 1's horizontal pickup band from its pickup point.")]
+        [SerializeField] private float column1PickupVerticalOffset;
+        [Tooltip("Half the vertical collection height for Column 1's pickup band.")]
+        [SerializeField, Min(0f)] private float column1PickupHalfHeight = 0.25f;
+        [Tooltip("Half the horizontal collection width for Column 2.")]
+        [FormerlySerializedAs("column2PickupRange")]
+        [SerializeField, Min(0f)] private float column2PickupHalfWidth = 0.5f;
+        [Tooltip("Vertical offset of Column 2's horizontal pickup band from its pickup point.")]
+        [SerializeField] private float column2PickupVerticalOffset;
+        [Tooltip("Half the vertical collection height for Column 2's pickup band.")]
+        [SerializeField, Min(0f)] private float column2PickupHalfHeight = 0.25f;
+        [Tooltip("Half the horizontal collection width for Column 3.")]
+        [FormerlySerializedAs("column3PickupRange")]
+        [SerializeField, Min(0f)] private float column3PickupHalfWidth = 0.5f;
+        [Tooltip("Vertical offset of Column 3's horizontal pickup band from its pickup point.")]
+        [SerializeField] private float column3PickupVerticalOffset;
+        [Tooltip("Half the vertical collection height for Column 3's pickup band.")]
+        [SerializeField, Min(0f)] private float column3PickupHalfHeight = 0.25f;
         [SerializeField] private float generatedRowSpacing = 1.1f;
 
         [Header("Ball Landing Motion")]
@@ -97,6 +121,17 @@ namespace PopSort
             };
         }
 
+        public bool IsWithinColumnPickupRange(int columnIndex, Vector3 worldPosition)
+        {
+            Transform pickupPoint = GetColumnPickupPoint(columnIndex);
+            if (pickupPoint == null) return false;
+
+            Vector2 rangeCenter = pickupPoint.position + Vector3.up * GetColumnPickupVerticalOffset(columnIndex);
+            Vector2 offset = (Vector2)worldPosition - rangeCenter;
+            return Mathf.Abs(offset.x) <= GetColumnPickupHalfWidth(columnIndex) &&
+                Mathf.Abs(offset.y) <= GetColumnPickupHalfHeight(columnIndex);
+        }
+
         public bool TryAcceptBallAtColumn(int columnIndex, Ball ball)
         {
             if (trayColumns == null || columnIndex < 0 || columnIndex >= trayColumns.Length) return false;
@@ -147,6 +182,55 @@ namespace PopSort
             ClearGeneratedTrays();
             SetLevelData(newLevelData);
             GenerateFromLevel();
+        }
+
+        private float GetColumnPickupHalfWidth(int columnIndex)
+        {
+            return columnIndex switch
+            {
+                0 => column1PickupHalfWidth,
+                1 => column2PickupHalfWidth,
+                2 => column3PickupHalfWidth,
+                _ => 0f
+            };
+        }
+
+        private float GetColumnPickupVerticalOffset(int columnIndex)
+        {
+            return columnIndex switch
+            {
+                0 => column1PickupVerticalOffset,
+                1 => column2PickupVerticalOffset,
+                2 => column3PickupVerticalOffset,
+                _ => 0f
+            };
+        }
+
+        private float GetColumnPickupHalfHeight(int columnIndex)
+        {
+            return columnIndex switch
+            {
+                0 => column1PickupHalfHeight,
+                1 => column2PickupHalfHeight,
+                2 => column3PickupHalfHeight,
+                _ => 0f
+            };
+        }
+
+        private void OnDrawGizmosSelected()
+        {
+            DrawPickupRange(column1PickupPoint, column1PickupHalfWidth, column1PickupVerticalOffset, column1PickupHalfHeight);
+            DrawPickupRange(column2PickupPoint, column2PickupHalfWidth, column2PickupVerticalOffset, column2PickupHalfHeight);
+            DrawPickupRange(column3PickupPoint, column3PickupHalfWidth, column3PickupVerticalOffset, column3PickupHalfHeight);
+        }
+
+        private static void DrawPickupRange(Transform pickupPoint, float halfWidth, float verticalOffset, float halfHeight)
+        {
+            if (pickupPoint == null || halfWidth <= 0f || halfHeight <= 0f) return;
+
+            Gizmos.color = Color.cyan;
+            Vector3 center = pickupPoint.position + Vector3.up * verticalOffset;
+            Gizmos.DrawWireCube(center, new Vector3(halfWidth * 2f, halfHeight * 2f, 0f));
         }
 
         private Vector3 GetColumnPosition(int columnIndex)

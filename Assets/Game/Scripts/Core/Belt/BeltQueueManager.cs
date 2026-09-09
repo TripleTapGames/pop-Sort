@@ -12,7 +12,6 @@ namespace PopSort
         [SerializeField] private TrayManager trayManager;
         [SerializeField] private SplineConveyorBelt2D splineConveyorBelt;
         [SerializeField] private Transform funnelExitPoint;
-        [SerializeField] private float acceptDistanceThreshold = 0.05f;
         [SerializeField] private float noMatchFailDelay = 0.75f;
         [SerializeField] private float funnelMoveSpeed = 6f;
         [SerializeField] private float slotCatchDistance = 0.35f;
@@ -340,13 +339,8 @@ namespace PopSort
         {
             for (int columnIndex = 0; columnIndex < trayManager.ColumnCount; columnIndex++)
             {
-                Transform pickupPoint = trayManager.GetColumnPickupPoint(columnIndex);
-                if (pickupPoint == null) continue;
-
-                float distance = Vector3.Distance(queuedBall.Ball.transform.position, pickupPoint.position);
-                if (distance > acceptDistanceThreshold) continue;
-
-                return trayManager.TryAcceptBallAtColumn(columnIndex, queuedBall.Ball);
+                if (!trayManager.IsWithinColumnPickupRange(columnIndex, queuedBall.Ball.transform.position)) continue;
+                if (trayManager.TryAcceptBallAtColumn(columnIndex, queuedBall.Ball)) return true;
             }
 
             return false;
