@@ -68,6 +68,7 @@ namespace PopSort
         public Sprite[] trayAssets;
         public Sprite[] holderAssets;
         public Sprite[] blockAssets;
+        public Sprite[] pressedAssets;
         public int colorCount = 4;
         public float beltSpeed = 0.2f;
         public int slotsPerTray = 3;
@@ -101,6 +102,11 @@ namespace PopSort
         public Sprite GetBlockAsset(int colorId)
         {
             return blockAssets != null && colorId >= 0 && colorId < blockAssets.Length ? blockAssets[colorId] : null;
+        }
+
+        public Sprite GetPressedAsset(int colorId)
+        {
+            return pressedAssets != null && colorId >= 0 && colorId < pressedAssets.Length ? pressedAssets[colorId] : null;
         }
 
         public int[] CountBallsByColor()

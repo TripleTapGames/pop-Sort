@@ -128,6 +128,7 @@ namespace PopSort.EditorTools
             }
 
             EnsurePaletteSize();
+            EditorGUILayout.LabelField("Asset order: ball, tray, tappable holder, blocked holder, pressed holder", EditorStyles.miniLabel);
 
             using (new EditorGUILayout.HorizontalScope())
             {
@@ -143,6 +144,8 @@ namespace PopSort.EditorTools
                             levelData.holderAssets[i], typeof(Sprite), false, GUILayout.Width(60f));
                         levelData.blockAssets[i] = (Sprite)EditorGUILayout.ObjectField(
                             levelData.blockAssets[i], typeof(Sprite), false, GUILayout.Width(60f));
+                        levelData.pressedAssets[i] = (Sprite)EditorGUILayout.ObjectField(
+                            levelData.pressedAssets[i], typeof(Sprite), false, GUILayout.Width(60f));
                         if (GUILayout.Toggle(activeColorId == i, $"Color {i}", "Button", GUILayout.Width(80f)))
                         {
                             activeColorId = i;
@@ -221,6 +224,7 @@ namespace PopSort.EditorTools
             levelData.trayAssets[newColorId] = config.trayAsset;
             levelData.holderAssets[newColorId] = config.popHolder;
             levelData.blockAssets[newColorId] = config.blockAsset;
+            levelData.pressedAssets[newColorId] = config.pressedAsset;
             activeColorId = newColorId;
             EditorUtility.SetDirty(levelData);
         }
@@ -692,6 +696,16 @@ namespace PopSort.EditorTools
                 for (int i = 0; i < size && oldAssets != null && i < oldAssets.Length; i++)
                 {
                     levelData.blockAssets[i] = oldAssets[i];
+                }
+            }
+
+            if (levelData.pressedAssets == null || levelData.pressedAssets.Length != size)
+            {
+                Sprite[] oldAssets = levelData.pressedAssets;
+                levelData.pressedAssets = new Sprite[size];
+                for (int i = 0; i < size && oldAssets != null && i < oldAssets.Length; i++)
+                {
+                    levelData.pressedAssets[i] = oldAssets[i];
                 }
             }
 

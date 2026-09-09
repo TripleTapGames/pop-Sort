@@ -94,9 +94,10 @@ namespace PopSort.EditorTools
                     }
 
                     if (levelData.GetPopAsset(cell.colorId) == null || levelData.GetTrayAsset(cell.colorId) == null ||
-                        levelData.GetHolderAsset(cell.colorId) == null)
+                        levelData.GetHolderAsset(cell.colorId) == null || levelData.GetBlockAsset(cell.colorId) == null ||
+                        levelData.GetPressedAsset(cell.colorId) == null)
                     {
-                        messages.Add(new LevelValidationMessage(LevelValidationSeverity.Error, $"Cell ({x}, {y}) color {cell.colorId} is missing pop/holder/tray assets."));
+                        messages.Add(new LevelValidationMessage(LevelValidationSeverity.Error, $"Cell ({x}, {y}) color {cell.colorId} is missing pop, holder, block, pressed, or tray assets."));
                     }
                 }
             }

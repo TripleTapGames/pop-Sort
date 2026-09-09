@@ -9,6 +9,7 @@ namespace PopSort
     {
         private LevelData levelData;
         [SerializeField] private BallPool ballPool;
+        [SerializeField] private BallHolder ballHolderPrefab;
         [SerializeField] private Transform gridOrigin;
         [SerializeField] private float cellSize = 1f;
         [SerializeField] private float memberOffsetRadius = 0.08f;
@@ -20,6 +21,7 @@ namespace PopSort
         private readonly List<Ball> aliveBalls = new List<Ball>();
         private readonly List<BallGroup> groups = new List<BallGroup>();
         private readonly List<Transform> holders = new List<Transform>();
+        private bool hasLoggedMissingBallHolderPrefab;
 
         private void Start()
         {
@@ -98,15 +100,15 @@ namespace PopSort
                     int ballCount = Mathf.Max(1, cell.ballCount);
                     BallGroup group = BallGroup.Create(this, cell.colorId, x, y);
                     Vector3 cellPosition = CellToWorldPosition(x, y, width, height);
-                    Transform holder = CreateHolder(x, y, cellPosition, levelData.GetHolderAsset(cell.colorId));
+                    BallHolder holder = CreateHolder(x, y, cellPosition, ballCount, cell.colorId);
 
                     Ball ball = ballPool.Get();
-                    ball.transform.SetParent(holder, false);
+                    ball.transform.SetParent(holder.transform, false);
                     ball.transform.position = cellPosition;
                     ball.transform.rotation = Quaternion.identity;
                     ball.Initialize(cell.colorId, levelData.GetPopAsset(cell.colorId), HandleBallPopped);
                     ball.ConfigureGroup(group, group.TryPop);
-                    group.SetVisibleBall(ball, ballCount);
+                    group.SetVisibleBall(ball, holder, ballCount);
                     aliveBalls.Add(ball);
                     groups.Add(group);
                 }
@@ -118,20 +120,37 @@ namespace PopSort
             RefreshGridBallSprites();
         }
 
-        private Transform CreateHolder(int x, int y, Vector3 position, Sprite holderSprite)
+        private BallHolder CreateHolder(int x, int y, Vector3 position, int ballCount, int colorId)
         {
-            GameObject holderObject = new GameObject($"BallHolder_{x}_{y}");
-            holderObject.transform.SetParent(transform, false);
-            holderObject.transform.position = position;
-            if (holderSprite != null)
+            BallHolder holder;
+            if (ballHolderPrefab != null)
             {
+                holder = Instantiate(ballHolderPrefab, transform);
+            }
+            else
+            {
+                if (!hasLoggedMissingBallHolderPrefab)
+                {
+                    Debug.LogError("GridManager requires a Ball Holder Prefab. Using fallback holders without count labels.", this);
+                    hasLoggedMissingBallHolderPrefab = true;
+                }
+                GameObject holderObject = new GameObject();
+                holderObject.transform.SetParent(transform, false);
                 SpriteRenderer holderRenderer = holderObject.AddComponent<SpriteRenderer>();
-                holderRenderer.sprite = holderSprite;
                 holderRenderer.sortingLayerName = "Ball";
                 holderRenderer.sortingOrder = 0;
+                holder = holderObject.AddComponent<BallHolder>();
             }
-            holders.Add(holderObject.transform);
-            return holderObject.transform;
+
+            holder.name = $"BallHolder_{x}_{y}";
+            holder.transform.position = position;
+            holder.Configure(
+                levelData.GetHolderAsset(colorId),
+                levelData.GetBlockAsset(colorId),
+                levelData.GetPressedAsset(colorId),
+                ballCount);
+            holders.Add(holder.transform);
+            return holder;
         }
 
         private void SpawnExtraBall(int colorId, Vector3 originPosition, Transform holder)
@@ -186,10 +205,9 @@ namespace PopSort
                 if (ball == null || ball.State != BallState.InGrid) continue;
                 if (!(ball.Group is BallGroup group)) continue;
 
-                Sprite sprite = HasBallBelowLogical(group)
-                    ? levelData.GetBlockAsset(ball.ColorId)
-                    : levelData.GetPopAsset(ball.ColorId);
-                ball.SetSprite(sprite);
+                bool tappable = !HasBallBelowLogical(group);
+                group.SetTappable(tappable);
+                ball.SetSprite(levelData.GetPopAsset(ball.ColorId));
             }
         }
 
@@ -219,6 +237,7 @@ namespace PopSort
             private readonly GridManager owner;
             private readonly int colorId;
             private Ball visibleBall;
+            private BallHolder holderDisplay;
             private Transform holder;
             private int remainingBalls;
             private bool popping;
@@ -231,12 +250,13 @@ namespace PopSort
                 return new BallGroup(owner, colorId, x, y);
             }
 
-            public void SetVisibleBall(Ball ball, int totalCount)
+            public void SetVisibleBall(Ball ball, BallHolder ballHolder, int totalCount)
             {
                 visibleBall = ball;
                 remainingBalls = totalCount - 1;
                 holder = ball != null ? ball.transform.parent : null;
-                ball.SetCount(totalCount);
+                holderDisplay = ballHolder;
+                holderDisplay?.SetCount(totalCount);
             }
 
             public void TryPop(Ball source)
@@ -247,7 +267,8 @@ namespace PopSort
                 popping = true;
                 Vector3 popPosition = holder != null ? holder.position : visibleBall.transform.position;
                 Transform poppedHolder = holder;
-                visibleBall.SetCount(1);
+                holderDisplay?.SetCount(0);
+                holderDisplay?.SetPressed();
                 visibleBall.PopBurst(owner.RandomBurstVelocity(), owner.RandomBurstAngularVelocity());
 
                 for (int i = 0; i < remainingBalls; i++)
@@ -257,6 +278,11 @@ namespace PopSort
 
                 remainingBalls = 0;
                 owner.StartCoroutine(owner.DestroyHolderAfterDelay(poppedHolder));
+            }
+
+            public void SetTappable(bool tappable)
+            {
+                holderDisplay?.SetTappable(tappable);
             }
         }
     }

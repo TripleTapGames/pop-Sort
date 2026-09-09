@@ -34,6 +34,7 @@ namespace PopSort
         private Action<Ball> onGroupPopRequested;
 
         private AudioSource audioSource;
+        private Vector3 prefabLocalScale;
 
         public void PopBurstFromState(Vector2 velocity, float angularVelocity)
         {
@@ -54,11 +55,13 @@ namespace PopSort
             col = GetComponent<CircleCollider2D>();
             sr = GetComponent<SpriteRenderer>();
             audioSource = GetComponent<AudioSource>();
+            prefabLocalScale = transform.localScale;
         }
 
         // Called each time this instance is (re)used from the pool for a fresh grid spawn.
         public void Initialize(int colorId, Sprite sprite, Action<Ball> poppedCallback)
         {
+            RestorePrefabScale();
             ColorId = colorId;
             if (sprite != null) sr.sprite = sprite;
             sr.color = Color.white;
@@ -177,6 +180,18 @@ namespace PopSort
             col.isTrigger = false;
         }
 
+        // The ball currently leaving the physical funnel pile.  It must not collide
+        // with the remaining dynamic balls while being guided to the belt exit.
+        public void SetFunnelExtracting()
+        {
+            State = BallState.FunnelWaiting;
+            rb.simulated = true;
+            rb.bodyType = RigidbodyType2D.Kinematic;
+            rb.velocity = Vector2.zero;
+            rb.angularVelocity = 0f;
+            col.isTrigger = true;
+        }
+
         public void SetFunnelDynamic()
         {
             State = BallState.FunnelWaiting;
@@ -197,6 +212,12 @@ namespace PopSort
             rb.angularVelocity = 0f;
             rb.simulated = false;
             col.enabled = false;
+            RestorePrefabScale();
+        }
+
+        private void RestorePrefabScale()
+        {
+            transform.localScale = prefabLocalScale;
         }
     }
 }

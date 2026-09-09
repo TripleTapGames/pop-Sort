@@ -19,6 +19,8 @@ namespace PopSort
         [SerializeField] private float funnelQueueSpacing = 0.5f;
         [SerializeField] private float seatToSlotSpeed = 100f;
         [SerializeField] private float funnelExitTolerance = 0.2f;
+        [Tooltip("Radius around the funnel outlet that hands falling balls to the funnel queue before they can jam on the physical lip.")]
+        [SerializeField] private float funnelCaptureRadius = 1.2f;
 
         public event Action OnOverflow;
 
@@ -77,6 +79,7 @@ namespace PopSort
         private readonly List<Ball> pendingBalls = new List<Ball>();
         private readonly List<Ball> funnelWaitingBalls = new List<Ball>();
         private readonly HashSet<int> occupiedSplineSlots = new HashSet<int>();
+        private readonly Collider2D[] funnelCaptureResults = new Collider2D[32];
         private float noMatchElapsedTime;
         private bool isProcessingQueue;
 
@@ -87,7 +90,7 @@ namespace PopSort
 
         public void HandleBallLanded(Ball ball)
         {
-            if (!isProcessingQueue) return;
+            if (!isProcessingQueue || ball == null || funnelWaitingBalls.Contains(ball)) return;
 
             if (splineConveyorBelt == null || trayManager == null || trayManager.ColumnCount == 0)
             {
@@ -111,10 +114,36 @@ namespace PopSort
         {
             if (!isProcessingQueue) return;
 
+            CaptureFallingBallsNearFunnelExit();
             TryCollectBallsAtPickup();
             TryAddPendingBalls();
             UpdateFunnelWaitingBalls();
             CheckForFullBeltDeadlock();
+        }
+
+        // The visual funnel can hold balls above its physical outlet.  Waiting for
+        // them to touch the belt means a stable pile can never enter the queue.
+        // Capture only falling balls near the outlet; after capture they remain
+        // dynamic until one is selected for extraction.
+        private void CaptureFallingBallsNearFunnelExit()
+        {
+            if (funnelExitPoint == null) return;
+
+            int resultCount = Physics2D.OverlapCircleNonAlloc(
+                funnelExitPoint.position,
+                funnelCaptureRadius,
+                funnelCaptureResults);
+
+            for (int i = 0; i < resultCount; i++)
+            {
+                Collider2D capturedCollider = funnelCaptureResults[i];
+                funnelCaptureResults[i] = null;
+
+                Ball ball = capturedCollider != null ? capturedCollider.GetComponent<Ball>() : null;
+                if (ball == null || ball.State != BallState.Falling) continue;
+
+                HandleBallLanded(ball);
+            }
         }
 
         private void AddBallToSplineBelt(Ball ball)
@@ -156,12 +185,20 @@ namespace PopSort
         private void UpdateFunnelWaitingBalls()
         {
             funnelWaitingBalls.RemoveAll(ball => ball == null);
-            for (int i = 0; i < funnelWaitingBalls.Count; i++)
+            if (funnelWaitingBalls.Count == 0) return;
+
+            // Collision order does not reliably match the physical order inside the
+            // funnel.  Extract the ball that has actually settled closest to the exit.
+            Ball frontBall = GetBallClosestToFunnelExit();
+            if (frontBall == null) return;
+
+            foreach (Ball waitingBall in funnelWaitingBalls)
             {
-                Ball waitingBall = funnelWaitingBalls[i];
-                if (i == 0)
+                if (waitingBall == frontBall)
                 {
-                    waitingBall.SetFunnelKinematic();
+                    // Keep the pile dynamic, but make the extracted ball non-blocking
+                    // while it is guided through the narrow funnel outlet.
+                    waitingBall.SetFunnelExtracting();
                     waitingBall.transform.position = Vector3.MoveTowards(
                         waitingBall.transform.position,
                         funnelExitPoint.position,
@@ -173,9 +210,8 @@ namespace PopSort
                 }
             }
 
-            if (funnelWaitingBalls.Count == 0 || queue.Count >= GetBeltCapacity()) return;
+            if (queue.Count >= GetBeltCapacity()) return;
 
-            Ball frontBall = funnelWaitingBalls[0];
             bool frontAtExit = Vector3.Distance(frontBall.transform.position, funnelExitPoint.position) <= funnelExitTolerance;
             if (!frontAtExit) return;
 
@@ -184,8 +220,27 @@ namespace PopSort
                 Vector3.Distance(splineConveyorBelt.GetSlotWorldPosition(slotIndex), funnelExitPoint.position) <= slotCatchDistance;
             if (!slotNearExit) return;
 
-            funnelWaitingBalls.RemoveAt(0);
+            funnelWaitingBalls.Remove(frontBall);
             AttachBallToSlot(frontBall, slotIndex);
+        }
+
+        private Ball GetBallClosestToFunnelExit()
+        {
+            Ball closestBall = null;
+            float closestDistance = float.PositiveInfinity;
+
+            foreach (Ball waitingBall in funnelWaitingBalls)
+            {
+                if (waitingBall == null) continue;
+
+                float distance = Vector3.Distance(waitingBall.transform.position, funnelExitPoint.position);
+                if (distance >= closestDistance) continue;
+
+                closestDistance = distance;
+                closestBall = waitingBall;
+            }
+
+            return closestBall;
         }
 
         private int FindNearestFreeSplineSlot(Vector3 worldPosition)
@@ -214,6 +269,14 @@ namespace PopSort
             if (levelData == null) return splineSlotCount;
 
             return Mathf.Min(Mathf.Max(levelData.beltSlotCount, 1), splineSlotCount);
+        }
+
+        private void OnDrawGizmosSelected()
+        {
+            if (funnelExitPoint == null) return;
+
+            Gizmos.color = Color.cyan;
+            Gizmos.DrawWireSphere(funnelExitPoint.position, funnelCaptureRadius);
         }
 
         private void CheckForFullBeltDeadlock()
