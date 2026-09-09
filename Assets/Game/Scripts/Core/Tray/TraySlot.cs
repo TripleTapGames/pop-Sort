@@ -1,6 +1,7 @@
 using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
+using UnityEngine.Events;
 
 namespace PopSort
 {
@@ -12,6 +13,10 @@ namespace PopSort
         [SerializeField] private BallPool ballPool;
         [SerializeField] private Transform[] slotPositions; // manually placed in the editor, one per capacity slot
         [SerializeField] private float intakeMoveSpeed = 8f;
+
+        [Header("Tray Animation Events")]
+        [SerializeField] private UnityEvent onTrayFilled = new UnityEvent();
+        [SerializeField] private UnityEvent onTrayEntering = new UnityEvent();
 
         public int ColorId => colorId;
         public bool HasSpace => placedBalls.Count < capacity;
@@ -66,6 +71,18 @@ namespace PopSort
             }
 
             placedBalls.Clear();
+        }
+
+        // Called by TrayColumn after the final ball has reached this tray.
+        public void InvokeTrayFilled()
+        {
+            onTrayFilled?.Invoke();
+        }
+
+        // Called by TrayColumn when this tray begins sliding into the active position.
+        public void InvokeTrayEntering()
+        {
+            onTrayEntering?.Invoke();
         }
 
         private float CalculateMoveTime(Vector3 startPosition, Vector3 targetPosition)

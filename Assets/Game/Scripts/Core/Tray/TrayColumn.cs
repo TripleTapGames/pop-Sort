@@ -7,8 +7,13 @@ namespace PopSort
     {
         [SerializeField] private TraySlot[] traySlots; // ordered front (active first) to back
 
+        [Header("Tray Transition Timing")]
+        [SerializeField, Min(0f)] private float filledAnimationHold = 0.35f;
+        [SerializeField, Min(0f)] private float forwardSlideDuration = 0.35f;
+
         private int activeIndex;
         private Vector3[] slotPositions; // cached original front-to-back layout positions
+        private bool isTransitioning;
 
         private void Awake()
         {
@@ -19,6 +24,7 @@ namespace PopSort
         {
             this.traySlots = traySlots;
             activeIndex = 0;
+            isTransitioning = false;
             CacheLayoutPositions();
         }
 
@@ -26,19 +32,16 @@ namespace PopSort
         {
             get
             {
-                if (traySlots == null || traySlots.Length == 0) return true;
-
-                foreach (TraySlot slot in traySlots)
-                {
-                    if (slot == null || !slot.IsComplete) return false;
-                }
-
-                return true;
+                return traySlots == null || traySlots.Length == 0 ||
+                    (!isTransitioning && activeIndex >= traySlots.Length);
             }
         }
 
         public bool CanAccept(int colorId) =>
+            !isTransitioning &&
+            traySlots != null &&
             activeIndex < traySlots.Length &&
+            traySlots[activeIndex] != null &&
             traySlots[activeIndex].ColorId == colorId &&
             traySlots[activeIndex].HasSpace;
 
@@ -50,6 +53,7 @@ namespace PopSort
             bool becameFull = activeSlot.Fill(ball);
             if (becameFull)
             {
+                isTransitioning = true;
                 StartCoroutine(ConsumeActiveTray(activeSlot));
             }
 
@@ -58,20 +62,72 @@ namespace PopSort
 
         private IEnumerator ConsumeActiveTray(TraySlot activeSlot)
         {
-            yield return new WaitForSeconds(activeSlot.LastIntakeMoveTime);
+            if (activeSlot.LastIntakeMoveTime > 0f)
+            {
+                yield return new WaitForSeconds(activeSlot.LastIntakeMoveTime);
+            }
+
+            activeSlot.InvokeTrayFilled();
+
+            if (filledAnimationHold > 0f)
+            {
+                yield return new WaitForSeconds(filledAnimationHold);
+            }
 
             activeSlot.ClearBalls();
             activeSlot.gameObject.SetActive(false);
-            ShiftRemainingTraysForward();
+
+            int nextIndex = activeIndex + 1;
+            if (nextIndex < traySlots.Length && traySlots[nextIndex] != null)
+            {
+                // The incoming visual starts while the queued stack moves forward.
+                traySlots[nextIndex].InvokeTrayEntering();
+            }
+
+            yield return SlideRemainingTraysForward();
             activeIndex++;
+            isTransitioning = false;
         }
 
-        // Moves every tray behind the one just consumed up by one slot in the stack.
-        private void ShiftRemainingTraysForward()
+        // Moves every tray behind the consumed one up by one slot in the stack.
+        private IEnumerator SlideRemainingTraysForward()
         {
-            for (int k = 1; activeIndex + k < traySlots.Length; k++)
+            int firstQueuedIndex = activeIndex + 1;
+            int queuedCount = traySlots.Length - firstQueuedIndex;
+            if (queuedCount <= 0) yield break;
+
+            Vector3[] startPositions = new Vector3[queuedCount];
+            for (int k = 0; k < queuedCount; k++)
             {
-                traySlots[activeIndex + k].transform.position = slotPositions[k - 1];
+                startPositions[k] = traySlots[firstQueuedIndex + k].transform.position;
+            }
+
+            if (forwardSlideDuration <= 0f)
+            {
+                SetQueuedTrayPositions(startPositions, 1f);
+                yield break;
+            }
+
+            float elapsed = 0f;
+            while (elapsed < forwardSlideDuration)
+            {
+                elapsed += Time.deltaTime;
+                float progress = Mathf.Clamp01(elapsed / forwardSlideDuration);
+                SetQueuedTrayPositions(startPositions, Mathf.SmoothStep(0f, 1f, progress));
+                yield return null;
+            }
+
+            SetQueuedTrayPositions(startPositions, 1f);
+        }
+
+        private void SetQueuedTrayPositions(Vector3[] startPositions, float progress)
+        {
+            for (int k = 0; k < startPositions.Length; k++)
+            {
+                TraySlot queuedTray = traySlots[activeIndex + 1 + k];
+                if (queuedTray == null) continue;
+
+                queuedTray.transform.position = Vector3.Lerp(startPositions[k], slotPositions[k], progress);
             }
         }
 
