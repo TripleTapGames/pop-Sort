@@ -134,10 +134,12 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   colorId: 0
   traySprite: {fileID: 0}
+  trayCoverSprite: {fileID: 0}
   capacity: 6
   ballPool: {fileID: 0}
   trayVisual: {fileID: 2693342972197041511}
   trayRoot: {fileID: 7458647472881069602}
+  trayCover: {fileID: 7404942621603753708}
   slotPositions:
   - {fileID: 1879382396716277443}
   - {fileID: 6324986304901022039}
@@ -724,11 +726,11 @@ SpriteRenderer:
   m_AutoUVMaxDistance: 0.5
   m_AutoUVMaxAngle: 89
   m_LightmapParameters: {fileID: 0}
-  m_SortingLayerID: 0
-  m_SortingLayer: 0
+  m_SortingLayerID: -2101894795
+  m_SortingLayer: 5
   m_SortingOrder: 3
   m_Sprite: {fileID: 21300000, guid: d6d8081322395e849a3e32d1da51c1ce, type: 3}
-  m_Color: {r: 0.015686275, g: 0.7568628, b: 0.9960785, a: 1}
+  m_Color: {r: 1, g: 1, b: 1, a: 1}
   m_FlipX: 0
   m_FlipY: 0
   m_DrawMode: 0

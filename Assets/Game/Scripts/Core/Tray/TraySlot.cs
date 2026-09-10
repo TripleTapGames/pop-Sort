@@ -41,6 +41,7 @@ namespace PopSort
     {
         [SerializeField] private int colorId;
         [SerializeField] private Sprite traySprite;
+        [SerializeField] private Sprite trayCoverSprite;
         [SerializeField] private int capacity = 3;
         [SerializeField] private BallPool ballPool;
 
@@ -48,6 +49,11 @@ namespace PopSort
 
         [SerializeField] private Transform trayRoot;
 
+        [SerializeField] private Transform trayCover;
+
+        [Header("Tray Impact Feedback")]
+        [SerializeField, Min(0f)] private float trayImpactDownDistance = 0.04f;
+        [SerializeField, Min(0f)] private float trayImpactDuration = 0.12f;
 
         [SerializeField] private Transform[] slotPositions; // manually placed in the editor, one per capacity slot
 
@@ -71,6 +77,8 @@ namespace PopSort
         private bool hasLoggedMissingSlotPosition;
         private TrayLandingSettings landingSettings;
         private Action<Vector3> onCompletionVfx;
+        private Vector3 trayRootBaseLocalPosition;
+        private Coroutine trayImpactRoutine;
 
         private void OnValidate()
         {
@@ -80,6 +88,7 @@ namespace PopSort
 
         private void Awake()
         {
+            CaptureTrayRootPosition();
             ApplyTrayColor();
         }
 
@@ -87,6 +96,7 @@ namespace PopSort
             int colorId,
             int capacity,
             Sprite traySprite,
+            Sprite trayCoverSprite,
             BallPool ballPool,
             TrayLandingSettings landingSettings,
             Action<Vector3> completionVfxCallback)
@@ -94,9 +104,13 @@ namespace PopSort
             this.colorId = colorId;
             this.capacity = Mathf.Max(capacity, 1);
             this.traySprite = traySprite;
+            this.trayCoverSprite = trayCoverSprite;
             this.ballPool = ballPool;
             this.landingSettings = landingSettings;
             onCompletionVfx = completionVfxCallback;
+            if (trayImpactRoutine != null) StopCoroutine(trayImpactRoutine);
+            trayImpactRoutine = null;
+            CaptureTrayRootPosition();
             placedBalls.Clear();
             hasReachedCapacity = false;
             lastLandingComplete = true;
@@ -122,6 +136,8 @@ namespace PopSort
         public void ClearBalls()
         {
             StopAllCoroutines();
+            trayImpactRoutine = null;
+            RestoreTrayRootPosition();
 
             foreach (Ball placed in placedBalls)
             {
@@ -184,6 +200,7 @@ namespace PopSort
             ball.CaptureVisualBaseScale();
             ball.FinishTrayLanding();
             SfxManager.PlayBallLandedInTray();
+            PlayTrayImpact();
             yield return PlayLandingPunch(ball);
             activeLandingCount = Mathf.Max(0, activeLandingCount - 1);
             lastLandingComplete = activeLandingCount == 0;
@@ -259,8 +276,56 @@ namespace PopSort
 
         private void ApplyTrayColor()
         {
-            // SpriteRenderer trayVisual = GetComponent<SpriteRenderer>();
             if (trayVisual != null && traySprite != null) trayVisual.sprite = traySprite;
+
+            SpriteRenderer trayCoverRenderer = trayCover != null ? trayCover.GetComponent<SpriteRenderer>() : null;
+            if (trayCoverRenderer != null && trayCoverSprite != null) trayCoverRenderer.sprite = trayCoverSprite;
+        }
+
+        private void PlayTrayImpact()
+        {
+            if (trayRoot == null || trayImpactDownDistance <= 0f || trayImpactDuration <= 0f) return;
+
+            if (trayImpactRoutine != null) StopCoroutine(trayImpactRoutine);
+            RestoreTrayRootPosition();
+            trayImpactRoutine = StartCoroutine(TrayImpactRoutine());
+        }
+
+        private IEnumerator TrayImpactRoutine()
+        {
+            Vector3 downPosition = trayRootBaseLocalPosition + Vector3.down * trayImpactDownDistance;
+            yield return MoveTrayRoot(trayRootBaseLocalPosition, downPosition, trayImpactDuration * 0.35f);
+            yield return MoveTrayRoot(downPosition, trayRootBaseLocalPosition, trayImpactDuration * 0.65f);
+
+            RestoreTrayRootPosition();
+            trayImpactRoutine = null;
+        }
+
+        private IEnumerator MoveTrayRoot(Vector3 from, Vector3 to, float duration)
+        {
+            if (duration <= 0f)
+            {
+                trayRoot.localPosition = to;
+                yield break;
+            }
+
+            float elapsed = 0f;
+            while (elapsed < duration)
+            {
+                elapsed += Time.deltaTime;
+                trayRoot.localPosition = Vector3.Lerp(from, to, Mathf.SmoothStep(0f, 1f, elapsed / duration));
+                yield return null;
+            }
+        }
+
+        private void CaptureTrayRootPosition()
+        {
+            if (trayRoot != null) trayRootBaseLocalPosition = trayRoot.localPosition;
+        }
+
+        private void RestoreTrayRootPosition()
+        {
+            if (trayRoot != null) trayRoot.localPosition = trayRootBaseLocalPosition;
         }
 
     }

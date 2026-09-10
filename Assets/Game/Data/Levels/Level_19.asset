@@ -145,6 +145,13 @@ MonoBehaviour:
   - {fileID: 21300000, guid: e6389ef92888c4f0080a3d06e9f1dab2, type: 3}
   - {fileID: 21300000, guid: f3342d78f138743238146624055b0bd5, type: 3}
   - {fileID: 21300000, guid: ee157900fca744b5da9fde2461e589d0, type: 3}
+  trayCoverAssets:
+  - {fileID: 21300000, guid: 6a77328d186fb5d4e8271847604afa13, type: 3}
+  - {fileID: 21300000, guid: 0674ddbcbee2c584badc25d96e15aba5, type: 3}
+  - {fileID: 21300000, guid: 583dcef70fa594a44bc548c441aad096, type: 3}
+  - {fileID: 21300000, guid: c00ba6d79fdf3134b91bf956cc70c50a, type: 3}
+  - {fileID: 21300000, guid: 3ba0df9dc933b8049bf4bf89bb000959, type: 3}
+  - {fileID: 21300000, guid: d6d8081322395e849a3e32d1da51c1ce, type: 3}
   holderAssets:
   - {fileID: 21300000, guid: 6566a98343de14e56b617e6050efaee1, type: 3}
   - {fileID: 21300000, guid: e262ea94af16e49bbbbbc544c463bef1, type: 3}

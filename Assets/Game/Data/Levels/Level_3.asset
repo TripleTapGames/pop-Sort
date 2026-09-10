@@ -74,6 +74,10 @@ MonoBehaviour:
   - {fileID: 21300000, guid: d46c36237ff064bedaa444b337ffed23, type: 3}
   - {fileID: 21300000, guid: e6389ef92888c4f0080a3d06e9f1dab2, type: 3}
   - {fileID: 21300000, guid: ee157900fca744b5da9fde2461e589d0, type: 3}
+  trayCoverAssets:
+  - {fileID: 21300000, guid: 52ff779b1a8e9f34ca75fbc43b3966be, type: 3}
+  - {fileID: 21300000, guid: c00ba6d79fdf3134b91bf956cc70c50a, type: 3}
+  - {fileID: 21300000, guid: d6d8081322395e849a3e32d1da51c1ce, type: 3}
   holderAssets:
   - {fileID: 21300000, guid: b3a6f70575aa44fce97f4ece5ecc19a3, type: 3}
   - {fileID: 21300000, guid: 6d32742f031b54855ba0b5d1e25ea25f, type: 3}
@@ -87,7 +91,7 @@ MonoBehaviour:
   - {fileID: 21300000, guid: 83f0f4761645049de8cedf267422690e, type: 3}
   - {fileID: 21300000, guid: 47cfbac975f7c4c5d850e58b7f4c5270, type: 3}
   colorCount: 3
-  beltSpeed: 0.3
+  beltSpeed: 0.2
   slotsPerTray: 3
   beltSlotCount: 20
   maxTrayColumnCount: 2
@@ -124,4 +128,3 @@ MonoBehaviour:
     usefulBallUnlockDepth: 1
     colourRepetition: 1
     verticalColourClustering: 1
-    preferredTrayColumnCount: 3

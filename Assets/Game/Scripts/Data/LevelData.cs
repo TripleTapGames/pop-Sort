@@ -65,6 +65,7 @@ namespace PopSort
         public Color[] colorPalette;
         public Sprite[] popAssets;
         public Sprite[] trayAssets;
+        public Sprite[] trayCoverAssets;
         public Sprite[] holderAssets;
         public Sprite[] blockAssets;
         public Sprite[] pressedAssets;
@@ -91,6 +92,13 @@ namespace PopSort
         public Sprite GetTrayAsset(int colorId)
         {
             return trayAssets != null && colorId >= 0 && colorId < trayAssets.Length ? trayAssets[colorId] : null;
+        }
+
+        public Sprite GetTrayCoverAsset(int colorId)
+        {
+            return trayCoverAssets != null && colorId >= 0 && colorId < trayCoverAssets.Length
+                ? trayCoverAssets[colorId]
+                : null;
         }
 
         public Sprite GetHolderAsset(int colorId)

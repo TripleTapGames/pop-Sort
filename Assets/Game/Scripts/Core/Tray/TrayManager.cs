@@ -92,6 +92,7 @@ namespace PopSort
                         trays[trayIndex].colorId,
                         trays[trayIndex].capacity,
                         levelData.GetTrayAsset(trays[trayIndex].colorId),
+                        levelData.GetTrayCoverAsset(trays[trayIndex].colorId),
                         ballPool,
                         trayLandingSettings,
                         PlayCompletionVfx);
@@ -119,7 +120,17 @@ namespace PopSort
 
         public Transform GetColumnPickupPoint(int columnIndex)
         {
-            return columnIndex switch
+            return GetColumnPickupPoint(columnIndex, ColumnCount);
+        }
+
+        private Transform GetColumnPickupPoint(int columnIndex, int columnCount)
+        {
+            return GetPickupPoint(GetPickupPointIndex(columnIndex, columnCount));
+        }
+
+        private Transform GetPickupPoint(int pickupPointIndex)
+        {
+            return pickupPointIndex switch
             {
                 0 => column1PickupPoint,
                 1 => column2PickupPoint,
@@ -130,7 +141,8 @@ namespace PopSort
 
         public bool IsWithinColumnPickupRange(int columnIndex, Vector3 worldPosition)
         {
-            Transform pickupPoint = GetColumnPickupPoint(columnIndex);
+            int columnCount = ColumnCount;
+            Transform pickupPoint = GetColumnPickupPoint(columnIndex, columnCount);
             if (pickupPoint == null) return false;
 
             Vector2 rangeCenter = pickupPoint.position + Vector3.up * GetColumnPickupVerticalOffset(columnIndex);
@@ -224,7 +236,12 @@ namespace PopSort
 
         private float GetColumnPickupHalfWidth(int columnIndex)
         {
-            return columnIndex switch
+            return GetPickupHalfWidth(GetPickupPointIndex(columnIndex, ColumnCount));
+        }
+
+        private float GetPickupHalfWidth(int pickupPointIndex)
+        {
+            return pickupPointIndex switch
             {
                 0 => column1PickupHalfWidth,
                 1 => column2PickupHalfWidth,
@@ -235,7 +252,12 @@ namespace PopSort
 
         private float GetColumnPickupVerticalOffset(int columnIndex)
         {
-            return columnIndex switch
+            return GetPickupVerticalOffset(GetPickupPointIndex(columnIndex, ColumnCount));
+        }
+
+        private float GetPickupVerticalOffset(int pickupPointIndex)
+        {
+            return pickupPointIndex switch
             {
                 0 => column1PickupVerticalOffset,
                 1 => column2PickupVerticalOffset,
@@ -246,7 +268,12 @@ namespace PopSort
 
         private float GetColumnPickupHalfHeight(int columnIndex)
         {
-            return columnIndex switch
+            return GetPickupHalfHeight(GetPickupPointIndex(columnIndex, ColumnCount));
+        }
+
+        private float GetPickupHalfHeight(int pickupPointIndex)
+        {
+            return pickupPointIndex switch
             {
                 0 => column1PickupHalfHeight,
                 1 => column2PickupHalfHeight,
@@ -317,13 +344,23 @@ namespace PopSort
         {
             for (int i = 0; i < columnCount; i++)
             {
-                if (GetColumnPickupPoint(i) != null) continue;
+                if (GetColumnPickupPoint(i, columnCount) != null) continue;
 
                 Debug.LogError($"TrayManager cannot generate trays: no pickup point assigned for tray column {i}.", this);
                 return false;
             }
 
             return true;
+        }
+
+        // Keep pickup lanes aligned with the anchor selection: one column uses the
+        // middle lane, while two columns use the outer lanes.
+        private static int GetPickupPointIndex(int columnIndex, int columnCount)
+        {
+            if (columnCount <= 1) return 1;
+
+            float normalizedIndex = Mathf.Clamp01(columnIndex / (float)(columnCount - 1));
+            return Mathf.RoundToInt(normalizedIndex * 2f);
         }
 
         private void ClearGeneratedObjects()

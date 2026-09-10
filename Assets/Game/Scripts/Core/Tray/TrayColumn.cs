@@ -8,7 +8,7 @@ namespace PopSort
         [SerializeField] private TraySlot[] traySlots; // ordered front (active first) to back
 
         [Header("Tray Transition Timing")]
-        [SerializeField, Min(0f)] private float filledAnimationHold = 0.35f;
+        [SerializeField, Min(0f)] private float filledAnimationHold = .45f;
         [SerializeField, Min(0f)] private float forwardSlideDuration = 0.35f;
 
         private int activeIndex;

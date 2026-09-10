@@ -128,7 +128,7 @@ namespace PopSort.EditorTools
             }
 
             EnsurePaletteSize();
-            EditorGUILayout.LabelField("Asset order: ball, tray, tappable holder, blocked holder, pressed holder", EditorStyles.miniLabel);
+            EditorGUILayout.LabelField("Asset order: ball, tray, tray cover, tappable holder, blocked holder, pressed holder", EditorStyles.miniLabel);
 
             using (new EditorGUILayout.HorizontalScope())
             {
@@ -140,6 +140,8 @@ namespace PopSort.EditorTools
                             levelData.popAssets[i], typeof(Sprite), false, GUILayout.Width(60f));
                         levelData.trayAssets[i] = (Sprite)EditorGUILayout.ObjectField(
                             levelData.trayAssets[i], typeof(Sprite), false, GUILayout.Width(60f));
+                        levelData.trayCoverAssets[i] = (Sprite)EditorGUILayout.ObjectField(
+                            levelData.trayCoverAssets[i], typeof(Sprite), false, GUILayout.Width(60f));
                         levelData.holderAssets[i] = (Sprite)EditorGUILayout.ObjectField(
                             levelData.holderAssets[i], typeof(Sprite), false, GUILayout.Width(60f));
                         levelData.blockAssets[i] = (Sprite)EditorGUILayout.ObjectField(
@@ -222,6 +224,7 @@ namespace PopSort.EditorTools
             EnsurePaletteSize();
             levelData.popAssets[newColorId] = config.popBalls;
             levelData.trayAssets[newColorId] = config.trayAsset;
+            levelData.trayCoverAssets[newColorId] = config.trayCoverAsset;
             levelData.holderAssets[newColorId] = config.popHolder;
             levelData.blockAssets[newColorId] = config.blockAsset;
             levelData.pressedAssets[newColorId] = config.pressedAsset;
@@ -672,6 +675,16 @@ namespace PopSort.EditorTools
                 for (int i = 0; i < size && oldAssets != null && i < oldAssets.Length; i++)
                 {
                     levelData.trayAssets[i] = oldAssets[i];
+                }
+            }
+
+            if (levelData.trayCoverAssets == null || levelData.trayCoverAssets.Length != size)
+            {
+                Sprite[] oldAssets = levelData.trayCoverAssets;
+                levelData.trayCoverAssets = new Sprite[size];
+                for (int i = 0; i < size && oldAssets != null && i < oldAssets.Length; i++)
+                {
+                    levelData.trayCoverAssets[i] = oldAssets[i];
                 }
             }
 
