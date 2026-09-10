@@ -1,4 +1,5 @@
 using UnityEngine;
+using TMPro;
 
 namespace PopSort
 {
@@ -22,6 +23,9 @@ namespace PopSort
         [SerializeField] private int levelNumber = 1;
         [SerializeField] private GameWin gameWinPanel;
         [SerializeField] private GameLoose gameLoosePanel;
+
+        [SerializeField] private TextMeshProUGUI txt_levelNo;
+
 
         public GameState State { get; private set; } = GameState.Playing;
         public LevelData CurrentLevel { get; private set; }

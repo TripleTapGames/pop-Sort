@@ -242,7 +242,7 @@ Rigidbody2D:
   m_LinearDrag: 0
   m_AngularDrag: 0.05
   m_GravityScale: 1
-  m_Material: {fileID: 0}
+  m_Material: {fileID: 6200000, guid: 0eae1478c44db4c6dbea2267ce964fbb, type: 2}
   m_IncludeLayers:
     serializedVersion: 2
     m_Bits: 0
@@ -268,10 +268,12 @@ MonoBehaviour:
   countLabel: {fileID: 7451908679276591042}
   popSfx: {fileID: 8300000, guid: 6720130f5ba9f4dc1adaadab0f29752b, type: 3}
   gravityScale: 1.5
-  bounceRetention: 0.22
+  bounceRetention: 0.699
   minimumBounceSpeed: 0.35
   queuedWobbleAngle: 1.5
   queuedWobbleSpeed: 7
+  spawnBounceDuration: 0.18
+  spawnBounceStrength: 0.08
 --- !u!82 &6460791916443633122
 AudioSource:
   m_ObjectHideFlags: 0
