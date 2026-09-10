@@ -169,7 +169,7 @@ MonoBehaviour:
   colorCount: 6
   beltSpeed: 0.3
   slotsPerTray: 3
-  beltSlotCount: 7
+  beltSlotCount: 20
   maxTrayColumnCount: 3
   trayColumns:
   - trays:
