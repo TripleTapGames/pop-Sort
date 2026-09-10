@@ -155,7 +155,7 @@ MonoBehaviour:
   - {fileID: 21300000, guid: 83f0f4761645049de8cedf267422690e, type: 3}
   - {fileID: 21300000, guid: c76215d1e47c94576add03602d328d3a, type: 3}
   colorCount: 4
-  beltSpeed: 0.4
+  beltSpeed: 0.2
   slotsPerTray: 3
   beltSlotCount: 20
   maxTrayColumnCount: 2

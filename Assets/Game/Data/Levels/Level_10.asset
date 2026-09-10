@@ -149,7 +149,7 @@ MonoBehaviour:
   - {fileID: 0}
   - {fileID: 0}
   colorCount: 3
-  beltSpeed: 0.4
+  beltSpeed: 0.2
   slotsPerTray: 3
   beltSlotCount: 20
   maxTrayColumnCount: 3

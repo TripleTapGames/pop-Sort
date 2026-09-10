@@ -29,6 +29,10 @@ namespace PopSort
         [SerializeField, Min(0f)] private float queuedWobbleAngle = 1.5f;
         [SerializeField, Min(0f)] private float queuedWobbleSpeed = 7f;
 
+        [Header("Spawn Bounce")]
+        [SerializeField, Min(0f)] private float spawnBounceDuration = 0.18f;
+        [SerializeField, Range(0f, 0.5f)] private float spawnBounceStrength = 0.08f;
+
         public int ColorId { get; private set; }
         public BallState State { get; private set; }
         public object Group { get; private set; }
@@ -97,6 +101,7 @@ namespace PopSort
             rb.simulated = true; // kinematic + simulated keeps the collider visible to Physics2D queries (tap detection)
             col.enabled = true;
             col.isTrigger = true;
+            PlayScalePunch(spawnBounceDuration, spawnBounceStrength);
         }
 
         public void ConfigureGroup(object group, Action<Ball> groupPopRequested)
@@ -313,8 +318,9 @@ namespace PopSort
             }
 
             Vector2 squash = new Vector2(1f + strength, 1f - strength);
+            Vector2 stretch = new Vector2(1f - strength * 0.5f, 1f + strength * 0.5f);
             float elapsed = 0f;
-            float squashDuration = duration * 0.35f;
+            float squashDuration = duration * 0.25f;
             while (elapsed < squashDuration)
             {
                 elapsed += Time.deltaTime;
@@ -323,11 +329,20 @@ namespace PopSort
             }
 
             elapsed = 0f;
-            float restoreDuration = duration * 0.65f;
+            float stretchDuration = duration * 0.35f;
+            while (elapsed < stretchDuration)
+            {
+                elapsed += Time.deltaTime;
+                SetVisualScaleMultiplier(Vector2.Lerp(squash, stretch, elapsed / stretchDuration));
+                yield return null;
+            }
+
+            elapsed = 0f;
+            float restoreDuration = duration * 0.4f;
             while (elapsed < restoreDuration)
             {
                 elapsed += Time.deltaTime;
-                SetVisualScaleMultiplier(Vector2.Lerp(squash, Vector2.one, elapsed / restoreDuration));
+                SetVisualScaleMultiplier(Vector2.Lerp(stretch, Vector2.one, elapsed / restoreDuration));
                 yield return null;
             }
 
