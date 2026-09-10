@@ -26,7 +26,6 @@ namespace PopSort
 
         [SerializeField] private TextMeshProUGUI txt_levelNo;
 
-
         public GameState State { get; private set; } = GameState.Playing;
         public LevelData CurrentLevel { get; private set; }
 
@@ -76,11 +75,6 @@ namespace PopSort
             if (tapInputManager != null) tapInputManager.enabled = false;
             beltQueueManager?.SetBeltMoving(false);
             gameLoosePanel?.Show(() => LoadLevel(levelNumber - 1));
-        }
-
-        private void OnGUI()
-        {
-            GUI.Label(new Rect(20f, 20f, 240f, 40f), $"Level {levelNumber}", GUI.skin.GetStyle("label"));
         }
 
         private void LoadNextLevel()
@@ -133,8 +127,14 @@ namespace PopSort
             beltQueueManager?.SetLevelData(nextLevel);
             gridManager?.SpawnGridFromLevelData(nextLevel);
             levelNumber = sequenceIndex + 1;
+            UpdateLevelNumberLabel();
             SaveProgress(sequenceIndex);
             if (tapInputManager != null) tapInputManager.enabled = true;
+        }
+
+        private void UpdateLevelNumberLabel()
+        {
+            if (txt_levelNo != null) txt_levelNo.text = $"Level {levelNumber}";
         }
 
         /// <summary>

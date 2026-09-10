@@ -12,15 +12,15 @@ namespace PopSort
         [SerializeField] private BallHolder ballHolderPrefab;
         [SerializeField] private Transform gridOrigin;
         [SerializeField] private float cellSize = 1f;
-        [SerializeField] private float memberOffsetRadius = 0.08f;
 
         [Header("Marble Pop Motion")]
-        [SerializeField] private float burstVelocity = 0.35f;
-        [SerializeField] private Vector2 burstDirection = new Vector2(0f, -1f);
+        [SerializeField] private float burstVelocity = 1.5f;
+        [SerializeField] private Vector2 burstDirection = Vector2.up;
         [SerializeField, Range(0f, 180f)] private float burstSpreadAngle = 55f;
         [SerializeField, Min(0f)] private float minimumBurstSpeedMultiplier = 0.8f;
         [SerializeField, Min(0f)] private float maximumBurstSpeedMultiplier = 1.2f;
         [SerializeField] private float burstAngularVelocity = 90f;
+        [SerializeField, Min(0f)] private float popReleaseInterval = 0.12f;
 
         [Header("Marble Pop Polish")]
         [SerializeField, Min(0f)] private float launchPunchDuration = 0.12f;
@@ -163,21 +163,21 @@ namespace PopSort
             return holder;
         }
 
-        private void SpawnExtraBall(int colorId, Vector3 originPosition, Transform holder)
+        private void SpawnExtraBall(int colorId, Vector3 originPosition, Transform holder, Vector2 launchVelocity)
         {
             Ball extraBall = ballPool.Get();
             if (holder != null) extraBall.transform.SetParent(holder, false);
-            extraBall.transform.position = originPosition + (Vector3)(UnityEngine.Random.insideUnitCircle * memberOffsetRadius);
+            extraBall.transform.position = originPosition;
             extraBall.transform.rotation = Quaternion.Euler(0f, 0f, UnityEngine.Random.Range(-15f, 15f));
             extraBall.Initialize(colorId, levelData.GetPopAsset(colorId), HandleBallPopped);
-            extraBall.PopBurstFromState(RandomBurstVelocity(), RandomBurstAngularVelocity());
+            extraBall.PopBurstFromState(launchVelocity, RandomBurstAngularVelocity());
             extraBall.PlayLaunchPunch(launchPunchDuration, launchPunchStrength);
             aliveBalls.Add(extraBall);
         }
 
         private Vector2 RandomBurstVelocity()
         {
-            Vector2 direction = burstDirection.sqrMagnitude > 0.0001f ? burstDirection.normalized : Vector2.down;
+            Vector2 direction = burstDirection.sqrMagnitude > 0.0001f ? burstDirection.normalized : Vector2.up;
             float angle = UnityEngine.Random.Range(-burstSpreadAngle, burstSpreadAngle);
             direction = (Vector2)(Quaternion.Euler(0f, 0f, angle) * direction);
 
@@ -189,6 +189,24 @@ namespace PopSort
         private float RandomBurstAngularVelocity()
         {
             return UnityEngine.Random.Range(-burstAngularVelocity, burstAngularVelocity);
+        }
+
+        private IEnumerator ReleaseRemainingBalls(
+            int colorId,
+            Vector3 popPosition,
+            Transform holder,
+            BallHolder holderDisplay,
+            Vector2 launchVelocity,
+            int remainingBallCount)
+        {
+            for (int ballIndex = remainingBallCount; ballIndex > 0; ballIndex--)
+            {
+                yield return new WaitForSeconds(popReleaseInterval);
+                SpawnExtraBall(colorId, popPosition, holder, launchVelocity);
+                holderDisplay?.SetCount(ballIndex - 1);
+            }
+
+            StartCoroutine(DestroyHolderAfterDelay(holder));
         }
 
         private Vector3 CellToWorldPosition(int x, int y, int width, int height)
@@ -283,19 +301,19 @@ namespace PopSort
 
                 popping = true;
                 Vector3 popPosition = holder != null ? holder.position : visibleBall.transform.position;
-                Transform poppedHolder = holder;
-                holderDisplay?.SetCount(0);
+                Vector2 launchVelocity = owner.RandomBurstVelocity();
                 holderDisplay?.SetPressed();
-                visibleBall.PopBurst(owner.RandomBurstVelocity(), owner.RandomBurstAngularVelocity());
+                visibleBall.PopBurst(launchVelocity, owner.RandomBurstAngularVelocity());
                 visibleBall.PlayLaunchPunch(owner.launchPunchDuration, owner.launchPunchStrength);
-
-                for (int i = 0; i < remainingBalls; i++)
-                {
-                    owner.SpawnExtraBall(colorId, popPosition, holder);
-                }
-
+                holderDisplay?.SetCount(remainingBalls);
+                owner.StartCoroutine(owner.ReleaseRemainingBalls(
+                    colorId,
+                    popPosition,
+                    holder,
+                    holderDisplay,
+                    launchVelocity,
+                    remainingBalls));
                 remainingBalls = 0;
-                owner.StartCoroutine(owner.DestroyHolderAfterDelay(poppedHolder));
             }
 
             public void SetTappable(bool tappable)

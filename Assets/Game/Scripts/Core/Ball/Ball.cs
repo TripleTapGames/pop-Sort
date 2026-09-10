@@ -20,6 +20,8 @@ namespace PopSort
         [SerializeField] private TextMeshProUGUI countLabel;
         [SerializeField] private AudioClip popSfx;
 
+        [SerializeField] private SpriteRenderer highlight;
+
         [Header("Marble Flight")]
         [SerializeField] private float gravityScale = 1.5f;
         [SerializeField, Range(0f, 1f)] private float bounceRetention = 0.22f;
@@ -33,6 +35,9 @@ namespace PopSort
         [SerializeField, Min(0f)] private float spawnBounceDuration = 0.18f;
         [SerializeField, Range(0f, 0.5f)] private float spawnBounceStrength = 0.08f;
 
+        [Header("Pop Rendering")]
+        [SerializeField] private int poppedSortingOrder = 3;
+
         public int ColorId { get; private set; }
         public BallState State { get; private set; }
         public object Group { get; private set; }
@@ -43,18 +48,23 @@ namespace PopSort
         private Rigidbody2D rb;
         private CircleCollider2D col;
         private SpriteRenderer sr;
+        private Canvas worldCanvas;
         private Action<Ball> onPopped;
         private Action<Ball> onGroupPopRequested;
 
         private AudioSource audioSource;
         private Vector3 prefabLocalScale;
         private Vector3 visualBaseLocalScale;
+        private int prefabSpriteSortingOrder;
+        private int prefabCanvasSortingOrder;
+        private int prefabHighlightSortingOrder;
         private float queueWobblePhase;
         private Coroutine scaleFeedbackRoutine;
 
         public void PopBurstFromState(Vector2 velocity, float angularVelocity)
         {
             transform.SetParent(null);
+            BringToFront();
             State = BallState.Falling;
             col.isTrigger = false;
             rb.simulated = true;
@@ -70,9 +80,13 @@ namespace PopSort
             rb = GetComponent<Rigidbody2D>();
             col = GetComponent<CircleCollider2D>();
             sr = GetComponent<SpriteRenderer>();
+            worldCanvas = GetComponentInChildren<Canvas>();
             audioSource = GetComponent<AudioSource>();
             prefabLocalScale = transform.localScale;
             visualBaseLocalScale = prefabLocalScale;
+            prefabSpriteSortingOrder = sr.sortingOrder;
+            prefabCanvasSortingOrder = worldCanvas != null ? worldCanvas.sortingOrder : 0;
+            prefabHighlightSortingOrder = highlight != null ? highlight.sortingOrder : 0;
         }
 
         private void Update()
@@ -87,8 +101,13 @@ namespace PopSort
         public void Initialize(int colorId, Sprite sprite, Action<Ball> poppedCallback)
         {
             RestorePrefabScale();
+            RestoreSortingOrders();
             ColorId = colorId;
-            if (sprite != null) sr.sprite = sprite;
+            if (sprite != null)
+            {
+                sr.sprite = sprite;
+                SetHighlightSprite(sprite);
+            }
             sr.color = Color.white;
             onPopped = poppedCallback;
             Group = null;
@@ -120,7 +139,10 @@ namespace PopSort
 
         public void SetSprite(Sprite sprite)
         {
-            if (sprite != null) sr.sprite = sprite;
+            if (sprite == null) return;
+
+            sr.sprite = sprite;
+            SetHighlightSprite(sprite);
         }
 
         public void Pop()
@@ -136,6 +158,7 @@ namespace PopSort
             if (HasBallBelow(false)) return;
 
             PlayPopSfx();
+            BringToFront();
             State = BallState.Falling;
             col.isTrigger = false;
             rb.simulated = true;
@@ -150,6 +173,7 @@ namespace PopSort
 
             transform.SetParent(null);
             PlayPopSfx();
+            BringToFront();
             State = BallState.Falling;
             col.isTrigger = false;
             rb.simulated = true;
@@ -289,6 +313,34 @@ namespace PopSort
             rb.simulated = false;
             col.enabled = false;
             RestorePrefabScale();
+            RestoreSortingOrders();
+        }
+
+        private void BringToFront()
+        {
+            if (sr != null) sr.sortingOrder = Mathf.Max(sr.sortingOrder, poppedSortingOrder);
+            if (worldCanvas != null) worldCanvas.sortingOrder = Mathf.Max(worldCanvas.sortingOrder, poppedSortingOrder);
+            if (highlight != null)
+            {
+                highlight.sortingLayerID = sr.sortingLayerID;
+                highlight.sortingOrder = sr.sortingOrder + 1;
+            }
+        }
+
+        private void RestoreSortingOrders()
+        {
+            if (sr != null) sr.sortingOrder = prefabSpriteSortingOrder;
+            if (worldCanvas != null) worldCanvas.sortingOrder = prefabCanvasSortingOrder;
+            if (highlight != null) highlight.sortingOrder = prefabHighlightSortingOrder;
+        }
+
+        private void SetHighlightSprite(Sprite sprite)
+        {
+            if (highlight == null) return;
+
+            highlight.sprite = sprite;
+            highlight.sortingLayerID = sr.sortingLayerID;
+            highlight.sortingOrder = sr.sortingOrder + 1;
         }
 
         private void RestorePrefabScale()

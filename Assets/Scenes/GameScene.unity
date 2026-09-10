@@ -423,13 +423,13 @@ MonoBehaviour:
   ballHolderPrefab: {fileID: 173686619405508608, guid: a03535d0da67b40dea52c04c4acacba2, type: 3}
   gridOrigin: {fileID: 885318}
   cellSize: 0.63
-  memberOffsetRadius: 0.08
-  burstVelocity: 0.35
-  burstDirection: {x: 0, y: -1}
+  burstVelocity: 1.5
+  burstDirection: {x: 0, y: 1}
   burstSpreadAngle: 55
   minimumBurstSpeedMultiplier: 0.8
   maximumBurstSpeedMultiplier: 1.2
   burstAngularVelocity: 90
+  popReleaseInterval: 0.12
   launchPunchDuration: 0.12
   launchPunchStrength: 0.12
 --- !u!4 &384712176
