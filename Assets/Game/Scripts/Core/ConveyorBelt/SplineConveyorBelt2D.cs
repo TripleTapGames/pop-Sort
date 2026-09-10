@@ -55,7 +55,6 @@ namespace PaperSort.Game
 
         private SplineContainer splineContainer;
         private List<Transform> elementTransforms = new List<Transform>();
-        private List<SpriteRenderer> spriteRenderers = new List<SpriteRenderer>();
         private float[] progressOffsets;
 
 #if UNITY_EDITOR
@@ -238,7 +237,6 @@ namespace PaperSort.Game
                 }
             }
             elementTransforms.Clear();
-            spriteRenderers.Clear();
         }
 
         public void SetupElements()
@@ -263,10 +261,10 @@ namespace PaperSort.Game
                 sr.sortingOrder = sortingOrder;
 
                 elementTransforms.Add(obj.transform);
-                spriteRenderers.Add(sr);
                 progressOffsets[i] = i * spacing;
             }
 
+            ApplyRollerScale();
             UpdatePositions(0f);
         }
 
@@ -291,26 +289,9 @@ namespace PaperSort.Game
 
         private void UpdatePositions(float deltaProgress)
         {
-            Vector3 parentLossyScale = transform.lossyScale;
-            Vector3 unscaledLocalScale = new Vector3(
-                spriteScale.x / (Mathf.Abs(parentLossyScale.x) > 0.0001f ? Mathf.Abs(parentLossyScale.x) : 1f),
-                spriteScale.y / (Mathf.Abs(parentLossyScale.y) > 0.0001f ? Mathf.Abs(parentLossyScale.y) : 1f),
-                1f
-            );
-
             for (int i = 0; i < elementTransforms.Count; i++)
             {
                 if (elementTransforms[i] == null) continue;
-
-                if (spriteRenderers.Count > i && spriteRenderers[i] != null)
-                {
-                    spriteRenderers[i].sprite = rollerSprite;
-                    spriteRenderers[i].color = spriteColor;
-                    spriteRenderers[i].sortingLayerName = sortingLayerName;
-                    spriteRenderers[i].sortingOrder = sortingOrder;
-                }
-
-                elementTransforms[i].localScale = unscaledLocalScale;
 
                 progressOffsets[i] = (progressOffsets[i] + deltaProgress) % 1f;
                 if (progressOffsets[i] < 0f) progressOffsets[i] += 1f;
@@ -329,6 +310,22 @@ namespace PaperSort.Game
                 {
                     elementTransforms[i].rotation = Quaternion.Euler(0f, 0f, rotationOffset);
                 }
+            }
+        }
+
+        // Visual properties are static while the game runs. Applying them at setup
+        // avoids repeating renderer property writes for every roller every frame.
+        private void ApplyRollerScale()
+        {
+            Vector3 parentLossyScale = transform.lossyScale;
+            Vector3 unscaledLocalScale = new Vector3(
+                spriteScale.x / (Mathf.Abs(parentLossyScale.x) > 0.0001f ? Mathf.Abs(parentLossyScale.x) : 1f),
+                spriteScale.y / (Mathf.Abs(parentLossyScale.y) > 0.0001f ? Mathf.Abs(parentLossyScale.y) : 1f),
+                1f);
+
+            foreach (Transform roller in elementTransforms)
+            {
+                if (roller != null) roller.localScale = unscaledLocalScale;
             }
         }
 
