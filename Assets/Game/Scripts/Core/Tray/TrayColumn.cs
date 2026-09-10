@@ -27,12 +27,10 @@ namespace PopSort
             isTransitioning = false;
             CacheLayoutPositions();
 
-            // The first tray is already active when a level is generated, so it
-            // never passes through the queued-tray slide path that normally fires
-            // the entering event.
+            // The initial tray is already visible; start it in its idle pose.
             if (this.traySlots != null && this.traySlots.Length > 0 && this.traySlots[0] != null)
             {
-                this.traySlots[0].InvokeTrayEntering();
+                this.traySlots[0].PlayTrayIdle();
             }
         }
 

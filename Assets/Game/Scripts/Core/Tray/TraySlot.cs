@@ -62,6 +62,8 @@ namespace PopSort
         [SerializeField, Min(0f)] private float generatedSlotRowSpacing = 0.48f;
 
         [Header("Tray Animation Events")]
+        [SerializeField] private Animator trayAnimator;
+        [SerializeField] private string trayIdleState = "TrayIdle";
         [SerializeField] private UnityEvent onTrayFilled = new UnityEvent();
         [SerializeField] private UnityEvent onTrayEntering = new UnityEvent();
 
@@ -169,6 +171,16 @@ namespace PopSort
         public void InvokeTrayEntering()
         {
             onTrayEntering?.Invoke();
+        }
+
+        // Used for trays that are already active when the level is created.
+        public void PlayTrayIdle()
+        {
+            if (trayAnimator == null) trayAnimator = GetComponent<Animator>();
+            if (trayAnimator != null && !string.IsNullOrWhiteSpace(trayIdleState))
+            {
+                trayAnimator.Play(trayIdleState, 0, 0f);
+            }
         }
 
         private IEnumerator LandBallInSlot(Ball ball, Vector3 targetPosition)

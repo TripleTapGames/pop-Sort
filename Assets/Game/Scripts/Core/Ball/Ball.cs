@@ -14,7 +14,7 @@ namespace PopSort
         InTray
     }
 
-    [RequireComponent(typeof(Rigidbody2D), typeof(CircleCollider2D), typeof(SpriteRenderer))]
+    [RequireComponent(typeof(Rigidbody2D), typeof(CircleCollider2D))]
     public class Ball : MonoBehaviour
     {
         [SerializeField] private TextMeshProUGUI countLabel;
@@ -45,14 +45,12 @@ namespace PopSort
 
         private Rigidbody2D rb;
         private CircleCollider2D col;
-        private SpriteRenderer sr;
         private Canvas worldCanvas;
         private Action<Ball> onPopped;
         private Action<Ball> onGroupPopRequested;
 
         private Vector3 prefabLocalScale;
         private Vector3 visualBaseLocalScale;
-        private int prefabSpriteSortingOrder;
         private int prefabCanvasSortingOrder;
         private int prefabHighlightSortingOrder;
         private float queueWobblePhase;
@@ -77,11 +75,9 @@ namespace PopSort
         {
             rb = GetComponent<Rigidbody2D>();
             col = GetComponent<CircleCollider2D>();
-            sr = GetComponent<SpriteRenderer>();
             worldCanvas = GetComponentInChildren<Canvas>();
             prefabLocalScale = transform.localScale;
             visualBaseLocalScale = prefabLocalScale;
-            prefabSpriteSortingOrder = sr.sortingOrder;
             prefabCanvasSortingOrder = worldCanvas != null ? worldCanvas.sortingOrder : 0;
             prefabHighlightSortingOrder = highlight != null ? highlight.sortingOrder : 0;
         }
@@ -102,10 +98,9 @@ namespace PopSort
             ColorId = colorId;
             if (sprite != null)
             {
-                sr.sprite = sprite;
                 SetHighlightSprite(sprite);
             }
-            sr.color = Color.white;
+            if (highlight != null) highlight.color = Color.white;
             onPopped = poppedCallback;
             Group = null;
             onGroupPopRequested = null;
@@ -138,7 +133,6 @@ namespace PopSort
         {
             if (sprite == null) return;
 
-            sr.sprite = sprite;
             SetHighlightSprite(sprite);
         }
 
@@ -312,18 +306,12 @@ namespace PopSort
 
         private void BringToFront()
         {
-            if (sr != null) sr.sortingOrder = Mathf.Max(sr.sortingOrder, poppedSortingOrder);
             if (worldCanvas != null) worldCanvas.sortingOrder = Mathf.Max(worldCanvas.sortingOrder, poppedSortingOrder);
-            if (highlight != null)
-            {
-                highlight.sortingLayerID = sr.sortingLayerID;
-                highlight.sortingOrder = sr.sortingOrder + 1;
-            }
+            if (highlight != null) highlight.sortingOrder = Mathf.Max(highlight.sortingOrder, poppedSortingOrder);
         }
 
         private void RestoreSortingOrders()
         {
-            if (sr != null) sr.sortingOrder = prefabSpriteSortingOrder;
             if (worldCanvas != null) worldCanvas.sortingOrder = prefabCanvasSortingOrder;
             if (highlight != null) highlight.sortingOrder = prefabHighlightSortingOrder;
         }
@@ -333,8 +321,6 @@ namespace PopSort
             if (highlight == null) return;
 
             highlight.sprite = sprite;
-            highlight.sortingLayerID = sr.sortingLayerID;
-            highlight.sortingOrder = sr.sortingOrder + 1;
         }
 
         private void RestorePrefabScale()

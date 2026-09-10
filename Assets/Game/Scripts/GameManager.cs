@@ -18,6 +18,8 @@ namespace PopSort
         [SerializeField] private BallPool ballPool;
         [SerializeField] private TapInputManager tapInputManager;
         [SerializeField] private LevelData[] levelSequence;
+        [Header("Performance")]
+        [SerializeField, Range(15, 120)] private int targetFrameRate = 30;
         [Tooltip("Resume the last reached level when the game is launched.")]
         [SerializeField] private bool resumeSavedProgress = true;
         [SerializeField] private int levelNumber = 1;
@@ -34,6 +36,9 @@ namespace PopSort
 
         private void Awake()
         {
+            // VSync takes priority over Application.targetFrameRate on desktop platforms.
+            QualitySettings.vSyncCount = 0;
+            Application.targetFrameRate = targetFrameRate;
             configuredStartingLevelIndex = levelNumber - 1;
         }
 
