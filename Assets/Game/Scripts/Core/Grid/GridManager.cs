@@ -175,8 +175,14 @@ namespace PopSort
             return holder;
         }
 
-        private void SpawnExtraBall(int colorId, Vector3 originPosition, Transform holder, Vector2 launchVelocity)
+        private void SpawnExtraBall(
+            int colorId,
+            Vector3 originPosition,
+            Transform holder,
+            Vector2 launchVelocity,
+            bool playHolderFeedback = true)
         {
+            if (playHolderFeedback) holder?.GetComponent<BallHolder>()?.PlayReleaseFeedback();
             Ball extraBall = ballPool.Get();
             if (holder != null) extraBall.transform.SetParent(holder, false);
             extraBall.transform.position = originPosition;
@@ -214,11 +220,43 @@ namespace PopSort
             for (int ballIndex = remainingBallCount; ballIndex > 0; ballIndex--)
             {
                 yield return new WaitForSeconds(popReleaseInterval);
-                SpawnExtraBall(colorId, popPosition, holder, launchVelocity);
-                holderDisplay?.SetCount(ballIndex - 1);
+
+                if (ballIndex == 1)
+                {
+                    // The final marble needs the feedback before its holder disappears.
+                    holderDisplay?.PlayReleaseFeedback();
+                    if (holderDisplay != null && holderDisplay.ReleaseFeedbackDuration > 0f)
+                    {
+                        yield return new WaitForSeconds(holderDisplay.ReleaseFeedbackDuration);
+                    }
+
+                    SpawnExtraBall(colorId, popPosition, holder, launchVelocity, false);
+                    holderDisplay?.SetCount(0);
+                    RemoveHolder(holder);
+                }
+                else
+                {
+                    SpawnExtraBall(colorId, popPosition, holder, launchVelocity);
+                    holderDisplay?.SetCount(ballIndex - 1);
+                }
+            }
+        }
+
+        private IEnumerator ReleaseSingleBallAfterFeedback(
+            int colorId,
+            Vector3 popPosition,
+            Transform holder,
+            BallHolder holderDisplay,
+            Vector2 launchVelocity)
+        {
+            holderDisplay?.PlayReleaseFeedback();
+            if (holderDisplay != null && holderDisplay.ReleaseFeedbackDuration > 0f)
+            {
+                yield return new WaitForSeconds(holderDisplay.ReleaseFeedbackDuration);
             }
 
-            StartCoroutine(DestroyHolderAfterDelay(holder));
+            SpawnExtraBall(colorId, popPosition, holder, launchVelocity, false);
+            RemoveHolder(holder);
         }
 
         private Vector3 CellToWorldPosition(int x, int y, int width, int height)
@@ -228,11 +266,14 @@ namespace PopSort
             return gridOrigin.position + new Vector3(centeredX, centeredY, 0f);
         }
 
-        private IEnumerator DestroyHolderAfterDelay(Transform holder)
+        private void RemoveHolder(Transform holder)
         {
-            yield return new WaitForSeconds(1f);
             holders.Remove(holder);
-            if (holder != null) Destroy(holder.gameObject);
+            if (holder == null) return;
+
+            // Hide immediately; Destroy itself is deferred until the end of the frame.
+            holder.gameObject.SetActive(false);
+            Destroy(holder.gameObject);
         }
 
         private void HandleBallPopped(Ball ball)
@@ -317,16 +358,28 @@ namespace PopSort
                 Vector3 popPosition = holder.position;
                 Vector2 launchVelocity = owner.RandomBurstVelocity();
                 holderDisplay?.SetPressed();
-                owner.SpawnExtraBall(colorId, popPosition, holder, launchVelocity);
                 remainingBalls--;
                 holderDisplay?.SetCount(remainingBalls);
-                owner.StartCoroutine(owner.ReleaseRemainingBalls(
-                    colorId,
-                    popPosition,
-                    holder,
-                    holderDisplay,
-                    launchVelocity,
-                    remainingBalls));
+                if (remainingBalls > 0)
+                {
+                    owner.SpawnExtraBall(colorId, popPosition, holder, launchVelocity);
+                    owner.StartCoroutine(owner.ReleaseRemainingBalls(
+                        colorId,
+                        popPosition,
+                        holder,
+                        holderDisplay,
+                        launchVelocity,
+                        remainingBalls));
+                }
+                else
+                {
+                    owner.StartCoroutine(owner.ReleaseSingleBallAfterFeedback(
+                        colorId,
+                        popPosition,
+                        holder,
+                        holderDisplay,
+                        launchVelocity));
+                }
                 remainingBalls = 0;
                 owner.RefreshGridBallSprites();
                 owner.NotifyGridClearedIfAllHoldersPopped();

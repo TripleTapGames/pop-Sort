@@ -18,8 +18,6 @@ namespace PopSort
     public class Ball : MonoBehaviour
     {
         [SerializeField] private TextMeshProUGUI countLabel;
-        [SerializeField] private AudioClip popSfx;
-
         [SerializeField] private SpriteRenderer highlight;
 
         [Header("Marble Flight")]
@@ -52,7 +50,6 @@ namespace PopSort
         private Action<Ball> onPopped;
         private Action<Ball> onGroupPopRequested;
 
-        private AudioSource audioSource;
         private Vector3 prefabLocalScale;
         private Vector3 visualBaseLocalScale;
         private int prefabSpriteSortingOrder;
@@ -64,6 +61,7 @@ namespace PopSort
         public void PopBurstFromState(Vector2 velocity, float angularVelocity)
         {
             transform.SetParent(null);
+            PlayPopSfx();
             BringToFront();
             State = BallState.Falling;
             col.isTrigger = false;
@@ -81,7 +79,6 @@ namespace PopSort
             col = GetComponent<CircleCollider2D>();
             sr = GetComponent<SpriteRenderer>();
             worldCanvas = GetComponentInChildren<Canvas>();
-            audioSource = GetComponent<AudioSource>();
             prefabLocalScale = transform.localScale;
             visualBaseLocalScale = prefabLocalScale;
             prefabSpriteSortingOrder = sr.sortingOrder;
@@ -205,10 +202,7 @@ namespace PopSort
 
         private void PlayPopSfx()
         {
-            if (audioSource != null && popSfx != null)
-            {
-                audioSource.PlayOneShot(popSfx);
-            }
+            SfxManager.PlayBallPop();
         }
 
         // Stops physics once queue movement takes over so belt positioning is exact.

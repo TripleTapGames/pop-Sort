@@ -145,6 +145,7 @@ namespace PopSort
         public void InvokeTrayFilled()
         {
             onCompletionVfx?.Invoke(trayRoot != null ? trayRoot.position : transform.position);
+            SfxManager.PlayTrayFilled();
             onTrayFilled?.Invoke();
         }
 
@@ -182,6 +183,7 @@ namespace PopSort
             ball.transform.SetParent(trayRoot != null ? trayRoot : transform, true);
             ball.CaptureVisualBaseScale();
             ball.FinishTrayLanding();
+            SfxManager.PlayBallLandedInTray();
             yield return PlayLandingPunch(ball);
             activeLandingCount = Mathf.Max(0, activeLandingCount - 1);
             lastLandingComplete = activeLandingCount == 0;
@@ -260,5 +262,6 @@ namespace PopSort
             // SpriteRenderer trayVisual = GetComponent<SpriteRenderer>();
             if (trayVisual != null && traySprite != null) trayVisual.sprite = traySprite;
         }
+
     }
 }
