@@ -17,6 +17,8 @@ namespace PopSort
         [SerializeField] private BallPool ballPool;
         [SerializeField] private TapInputManager tapInputManager;
         [SerializeField] private LevelData[] levelSequence;
+        [Tooltip("Resume the last reached level when the game is launched.")]
+        [SerializeField] private bool resumeSavedProgress = true;
         [SerializeField] private int levelNumber = 1;
         [SerializeField] private GameWin gameWinPanel;
         [SerializeField] private GameLoose gameLoosePanel;
@@ -24,9 +26,17 @@ namespace PopSort
         public GameState State { get; private set; } = GameState.Playing;
         public LevelData CurrentLevel { get; private set; }
 
+        private const string SavedLevelIndexKey = "PopSort.SavedLevelIndex";
+        private int configuredStartingLevelIndex;
+
+        private void Awake()
+        {
+            configuredStartingLevelIndex = levelNumber - 1;
+        }
+
         private void Start()
         {
-            LoadLevel(levelNumber - 1);
+            LoadLevel(GetStartingLevelIndex());
         }
 
         private void OnEnable()
@@ -47,6 +57,7 @@ namespace PopSort
             if (trayManager != null && trayManager.AreAllTraysComplete())
             {
                 State = GameState.Won;
+                SaveNextLevelProgress();
                 if (tapInputManager != null) tapInputManager.enabled = false;
                 beltQueueManager?.SetBeltMoving(false);
                 gameWinPanel?.Show(LoadNextLevel);
@@ -118,7 +129,71 @@ namespace PopSort
             beltQueueManager?.SetLevelData(nextLevel);
             gridManager?.SpawnGridFromLevelData(nextLevel);
             levelNumber = sequenceIndex + 1;
+            SaveProgress(sequenceIndex);
             if (tapInputManager != null) tapInputManager.enabled = true;
+        }
+
+        /// <summary>
+        /// Clears the saved level and returns to the level configured in the inspector.
+        /// This can be connected to a reset-progress button.
+        /// </summary>
+        public void ResetSavedProgress()
+        {
+            PlayerPrefs.DeleteKey(SavedLevelIndexKey);
+            PlayerPrefs.Save();
+            LoadLevel(GetConfiguredStartingLevelIndex());
+        }
+
+        private int GetStartingLevelIndex()
+        {
+            int configuredIndex = GetConfiguredStartingLevelIndex();
+            if (!resumeSavedProgress || !PlayerPrefs.HasKey(SavedLevelIndexKey)) return configuredIndex;
+
+            int savedIndex = PlayerPrefs.GetInt(SavedLevelIndexKey);
+            return IsValidLevelIndex(savedIndex) ? savedIndex : configuredIndex;
+        }
+
+        private int GetConfiguredStartingLevelIndex()
+        {
+            if (levelSequence == null || levelSequence.Length == 0) return 0;
+
+            int requestedIndex = Mathf.Clamp(configuredStartingLevelIndex, 0, levelSequence.Length - 1);
+            if (IsValidLevelIndex(requestedIndex)) return requestedIndex;
+
+            for (int index = 0; index < levelSequence.Length; index++)
+            {
+                if (IsValidLevelIndex(index)) return index;
+            }
+
+            return requestedIndex;
+        }
+
+        private bool IsValidLevelIndex(int index)
+        {
+            return levelSequence != null && index >= 0 && index < levelSequence.Length && levelSequence[index] != null;
+        }
+
+        private void SaveNextLevelProgress()
+        {
+            if (levelSequence == null || levelSequence.Length == 0) return;
+
+            for (int offset = 1; offset <= levelSequence.Length; offset++)
+            {
+                int candidateIndex = ((levelNumber - 1) + offset) % levelSequence.Length;
+                if (IsValidLevelIndex(candidateIndex))
+                {
+                    SaveProgress(candidateIndex);
+                    return;
+                }
+            }
+        }
+
+        private void SaveProgress(int sequenceIndex)
+        {
+            if (!resumeSavedProgress || !IsValidLevelIndex(sequenceIndex)) return;
+
+            PlayerPrefs.SetInt(SavedLevelIndexKey, sequenceIndex);
+            PlayerPrefs.Save();
         }
     }
 }
