@@ -3,40 +3,45 @@ using UnityEngine;
 
 namespace PopSort
 {
-    [RequireComponent(typeof(SpriteRenderer))]
     public class BallHolder : MonoBehaviour
     {
-        [SerializeField] private SpriteRenderer holderRenderer;
+        [SerializeField] private GameObject popHolderSprite;
+        [SerializeField] private GameObject blocks;
+        [SerializeField] private GameObject pressedEffect;
         [SerializeField] private TMP_Text countLabel;
         [SerializeField] private bool showCountForSingleBall;
 
-        private Sprite popHolderSprite;
-        private Sprite blockSprite;
-        private Sprite pressedSprite;
+        private SpriteRenderer popHolderRenderer;
+        private SpriteRenderer blocksRenderer;
+        private SpriteRenderer pressedEffectRenderer;
+        private bool isPressed;
 
         private void Awake()
         {
-            if (holderRenderer == null) holderRenderer = GetComponent<SpriteRenderer>();
             if (countLabel == null) countLabel = GetComponentInChildren<TMP_Text>(true);
+            CacheStateRenderers();
         }
 
-        public void Configure(Sprite popHolder, Sprite blockAsset, Sprite pressedAsset, int ballCount)
+        public void Configure(Sprite popHolderAsset, Sprite blockAsset, Sprite pressedAsset, int ballCount)
         {
-            if (holderRenderer == null) holderRenderer = GetComponent<SpriteRenderer>();
             if (countLabel == null) countLabel = GetComponentInChildren<TMP_Text>(true);
 
-            popHolderSprite = popHolder;
-            blockSprite = blockAsset;
-            pressedSprite = pressedAsset;
+            isPressed = false;
+
+            CacheStateRenderers();
+            if (popHolderRenderer != null) popHolderRenderer.sprite = popHolderAsset;
+            if (blocksRenderer != null) blocksRenderer.sprite = blockAsset;
+            if (pressedEffectRenderer != null) pressedEffectRenderer.sprite = pressedAsset;
+
+            SetStateObjects(true, false, false);
             SetCount(ballCount);
         }
 
         public void SetTappable(bool tappable)
         {
-            if (holderRenderer != null)
-            {
-                holderRenderer.sprite = tappable ? popHolderSprite : blockSprite;
-            }
+            if (isPressed) return;
+
+            SetStateObjects(tappable, !tappable, false);
         }
 
         public void SetCount(int count)
@@ -49,10 +54,34 @@ namespace PopSort
 
         public void SetPressed()
         {
-            if (holderRenderer != null && pressedSprite != null)
+            isPressed = true;
+
+            SetStateObjects(false, false, true);
+        }
+
+        private void CacheStateRenderers()
+        {
+            if (popHolderRenderer == null && popHolderSprite != null)
             {
-                holderRenderer.sprite = pressedSprite;
+                popHolderRenderer = popHolderSprite.GetComponent<SpriteRenderer>();
             }
+
+            if (blocksRenderer == null && blocks != null)
+            {
+                blocksRenderer = blocks.GetComponent<SpriteRenderer>();
+            }
+
+            if (pressedEffectRenderer == null && pressedEffect != null)
+            {
+                pressedEffectRenderer = pressedEffect.GetComponent<SpriteRenderer>();
+            }
+        }
+
+        private void SetStateObjects(bool showPopHolder, bool showBlocks, bool showPressedEffect)
+        {
+            if (popHolderSprite != null) popHolderSprite.SetActive(showPopHolder);
+            if (blocks != null) blocks.SetActive(showBlocks);
+            if (pressedEffect != null) pressedEffect.SetActive(showPressedEffect);
         }
     }
 }

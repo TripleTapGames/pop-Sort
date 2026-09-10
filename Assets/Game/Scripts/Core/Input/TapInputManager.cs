@@ -12,11 +12,7 @@ namespace PopSort
             Vector2? tapWorldPos = GetTapWorldPosition();
             if (tapWorldPos == null) return;
 
-            Ball ball = gridManager != null ? gridManager.FindBallAtWorldPosition(tapWorldPos.Value) : null;
-            if (ball != null && ball.State == BallState.InGrid)
-            {
-                ball.Pop();
-            }
+            gridManager?.TryPopHolderAtWorldPosition(tapWorldPos.Value);
         }
 
         private Vector2? GetTapWorldPosition()

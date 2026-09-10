@@ -68,6 +68,29 @@ namespace PopSort
             return closest;
         }
 
+        public bool TryPopHolderAtWorldPosition(Vector2 worldPosition)
+        {
+            BallGroup closestGroup = null;
+            float closestSqrDistance = float.PositiveInfinity;
+            float tapRadius = cellSize * 0.5f;
+
+            foreach (BallGroup group in groups)
+            {
+                if (group == null || group.IsPopping || HasBallBelowLogical(group)) continue;
+
+                float sqrDistance = ((Vector2)group.Position - worldPosition).sqrMagnitude;
+                if (sqrDistance > tapRadius * tapRadius || sqrDistance >= closestSqrDistance) continue;
+
+                closestGroup = group;
+                closestSqrDistance = sqrDistance;
+            }
+
+            if (closestGroup == null) return false;
+
+            closestGroup.TryPopFromHolder();
+            return true;
+        }
+
         public void ClearGrid()
         {
             StopAllCoroutines();
@@ -111,15 +134,7 @@ namespace PopSort
                     BallGroup group = BallGroup.Create(this, cell.colorId, x, y);
                     Vector3 cellPosition = CellToWorldPosition(x, y, width, height);
                     BallHolder holder = CreateHolder(x, y, cellPosition, ballCount, cell.colorId);
-
-                    Ball ball = ballPool.Get();
-                    ball.transform.SetParent(holder.transform, false);
-                    ball.transform.position = cellPosition;
-                    ball.transform.rotation = Quaternion.identity;
-                    ball.Initialize(cell.colorId, levelData.GetPopAsset(cell.colorId), HandleBallPopped);
-                    ball.ConfigureGroup(group, group.TryPop);
-                    group.SetVisibleBall(ball, holder, ballCount);
-                    aliveBalls.Add(ball);
+                    group.SetHolder(holder, ballCount);
                     groups.Add(group);
                 }
             }
@@ -146,9 +161,6 @@ namespace PopSort
                 }
                 GameObject holderObject = new GameObject();
                 holderObject.transform.SetParent(transform, false);
-                SpriteRenderer holderRenderer = holderObject.AddComponent<SpriteRenderer>();
-                holderRenderer.sortingLayerName = "Ball";
-                holderRenderer.sortingOrder = 0;
                 holder = holderObject.AddComponent<BallHolder>();
             }
 
@@ -227,22 +239,24 @@ namespace PopSort
         {
             aliveBalls.Remove(ball);
             RefreshGridBallSprites();
-            if (aliveBalls.Count == 0)
+        }
+
+        private void NotifyGridClearedIfAllHoldersPopped()
+        {
+            foreach (BallGroup group in groups)
             {
-                OnGridCleared?.Invoke();
+                if (group != null && !group.IsPopping) return;
             }
+
+            OnGridCleared?.Invoke();
         }
 
         private void RefreshGridBallSprites()
         {
-            foreach (Ball ball in aliveBalls)
+            foreach (BallGroup group in groups)
             {
-                if (ball == null || ball.State != BallState.InGrid) continue;
-                if (!(ball.Group is BallGroup group)) continue;
-
                 bool tappable = !HasBallBelowLogical(group);
                 group.SetTappable(tappable);
-                ball.SetSprite(levelData.GetPopAsset(ball.ColorId));
             }
         }
 
@@ -250,9 +264,9 @@ namespace PopSort
         // against just-reactivated pooled colliders in the same frame a level (re)spawns.
         private bool HasBallBelowLogical(BallGroup group)
         {
-            foreach (Ball otherBall in aliveBalls)
+            foreach (BallGroup otherGroup in groups)
             {
-                if (otherBall == null || !(otherBall.Group is BallGroup otherGroup) || otherGroup == group) continue;
+                if (otherGroup == null || otherGroup == group || otherGroup.IsPopping) continue;
                 if (otherGroup.X == group.X && otherGroup.Y > group.Y) return true;
             }
 
@@ -271,7 +285,6 @@ namespace PopSort
 
             private readonly GridManager owner;
             private readonly int colorId;
-            private Ball visibleBall;
             private BallHolder holderDisplay;
             private Transform holder;
             private int remainingBalls;
@@ -279,32 +292,33 @@ namespace PopSort
 
             public int X { get; }
             public int Y { get; }
+            public bool IsPopping => popping;
+            public Vector3 Position => holder != null ? holder.position : Vector3.zero;
 
             public static BallGroup Create(GridManager owner, int colorId, int x, int y)
             {
                 return new BallGroup(owner, colorId, x, y);
             }
 
-            public void SetVisibleBall(Ball ball, BallHolder ballHolder, int totalCount)
+            public void SetHolder(BallHolder ballHolder, int totalCount)
             {
-                visibleBall = ball;
-                remainingBalls = totalCount - 1;
-                holder = ball != null ? ball.transform.parent : null;
+                remainingBalls = totalCount;
+                holder = ballHolder != null ? ballHolder.transform : null;
                 holderDisplay = ballHolder;
                 holderDisplay?.SetCount(totalCount);
             }
 
-            public void TryPop(Ball source)
+            public void TryPopFromHolder()
             {
-                if (popping || source == null || visibleBall == null) return;
+                if (popping || holder == null) return;
                 if (owner.HasBallBelowLogical(this)) return;
 
                 popping = true;
-                Vector3 popPosition = holder != null ? holder.position : visibleBall.transform.position;
+                Vector3 popPosition = holder.position;
                 Vector2 launchVelocity = owner.RandomBurstVelocity();
                 holderDisplay?.SetPressed();
-                visibleBall.PopBurst(launchVelocity, owner.RandomBurstAngularVelocity());
-                visibleBall.PlayLaunchPunch(owner.launchPunchDuration, owner.launchPunchStrength);
+                owner.SpawnExtraBall(colorId, popPosition, holder, launchVelocity);
+                remainingBalls--;
                 holderDisplay?.SetCount(remainingBalls);
                 owner.StartCoroutine(owner.ReleaseRemainingBalls(
                     colorId,
@@ -314,6 +328,8 @@ namespace PopSort
                     launchVelocity,
                     remainingBalls));
                 remainingBalls = 0;
+                owner.RefreshGridBallSprites();
+                owner.NotifyGridClearedIfAllHoldersPopped();
             }
 
             public void SetTappable(bool tappable)
