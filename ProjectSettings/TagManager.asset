@@ -44,7 +44,7 @@ TagManager:
   - name: Tray
     uniqueID: 4063019963
     locked: 0
-  - name: Ball
+  - name: BallHolder
     uniqueID: 3374986001
     locked: 0
   - name: Conveyor
@@ -52,4 +52,7 @@ TagManager:
     locked: 0
   - name: Tray
     uniqueID: 1023231293
+    locked: 0
+  - name: Ball
+    uniqueID: 2193072501
     locked: 0
