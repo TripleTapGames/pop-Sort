@@ -86,7 +86,7 @@ namespace PopSort.EditorTools
             levelData.beltSlotCount = Mathf.Max(1, EditorGUILayout.IntField("Belt Slot Count", levelData.beltSlotCount));
             levelData.slotsPerTray = Mathf.Max(1, EditorGUILayout.IntField("Slots Per Tray", levelData.slotsPerTray));
             levelData.maxTrayColumnCount = Mathf.Clamp(
-                EditorGUILayout.IntField("Max Tray Columns", levelData.maxTrayColumnCount), 2, 3);
+                EditorGUILayout.IntField("Max Tray Columns", levelData.maxTrayColumnCount), 1, 3);
 
             if (difficultyChanged)
             {
@@ -462,7 +462,6 @@ namespace PopSort.EditorTools
                     parameters.usefulBallUnlockDepth = 1;
                     parameters.colourRepetition = 1f;
                     parameters.verticalColourClustering = 1f;
-                    parameters.preferredTrayColumnCount = 3;
                     break;
                 case LevelDifficulty.Medium:
                     parameters.maxCanonicalConveyorPressure = 0.4f;
@@ -470,7 +469,6 @@ namespace PopSort.EditorTools
                     parameters.usefulBallUnlockDepth = 2;
                     parameters.colourRepetition = 0.65f;
                     parameters.verticalColourClustering = 0.65f;
-                    parameters.preferredTrayColumnCount = 3;
                     break;
                 case LevelDifficulty.Hard:
                     parameters.maxCanonicalConveyorPressure = 0.6f;
@@ -478,7 +476,6 @@ namespace PopSort.EditorTools
                     parameters.usefulBallUnlockDepth = 3;
                     parameters.colourRepetition = 0.35f;
                     parameters.verticalColourClustering = 0.35f;
-                    parameters.preferredTrayColumnCount = 2;
                     break;
                 case LevelDifficulty.SuperHard:
                     parameters.maxCanonicalConveyorPressure = 0.75f;
@@ -486,7 +483,6 @@ namespace PopSort.EditorTools
                     parameters.usefulBallUnlockDepth = 4;
                     parameters.colourRepetition = 0.1f;
                     parameters.verticalColourClustering = 0.1f;
-                    parameters.preferredTrayColumnCount = 2;
                     break;
             }
 

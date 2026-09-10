@@ -102,9 +102,10 @@ namespace PopSort.EditorTools
                 }
             }
 
-            if (levelData.trayColumns == null || levelData.trayColumns.Length < 2 || levelData.trayColumns.Length > 4)
+            int maxTrayColumns = Mathf.Clamp(levelData.maxTrayColumnCount, 1, 3);
+            if (levelData.trayColumns == null || levelData.trayColumns.Length < 1 || levelData.trayColumns.Length > maxTrayColumns)
             {
-                messages.Add(new LevelValidationMessage(LevelValidationSeverity.Error, "Tray columns must be between 2 and 4."));
+                messages.Add(new LevelValidationMessage(LevelValidationSeverity.Error, $"Tray columns must be between 1 and {maxTrayColumns}."));
             }
 
             if (enabledCells == 0)
@@ -133,7 +134,7 @@ namespace PopSort.EditorTools
                 messages.Add(new LevelValidationMessage(LevelValidationSeverity.Error, $"Tray capacity ({levelData.TotalTrayCapacity()}) must exactly equal total balls ({levelData.TotalBallCount()})."));
             }
 
-            int previewColumns = Mathf.Min(Mathf.Max(totalGeneratedTrays, 1), LevelData.DefaultTrayColumnCount);
+            int previewColumns = levelData.trayColumns?.Length ?? 0;
             messages.Add(new LevelValidationMessage(LevelValidationSeverity.Info, $"Tray preview uses {previewColumns} columns, filled row-first left to right."));
 
             return messages;

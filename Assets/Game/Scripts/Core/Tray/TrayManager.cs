@@ -75,7 +75,7 @@ namespace PopSort
             {
                 GameObject columnObject = new GameObject($"TrayColumn_{columnIndex}");
                 columnObject.transform.SetParent(transform);
-                columnObject.transform.position = GetColumnPosition(columnIndex);
+                columnObject.transform.position = GetColumnPosition(columnIndex, columnData.Length);
                 generatedObjects.Add(columnObject);
 
                 TrayColumn column = columnObject.AddComponent<TrayColumn>();
@@ -271,9 +271,17 @@ namespace PopSort
             Gizmos.DrawWireCube(center, new Vector3(halfWidth * 2f, halfHeight * 2f, 0f));
         }
 
-        private Vector3 GetColumnPosition(int columnIndex)
+        private Vector3 GetColumnPosition(int columnIndex, int columnCount)
         {
-            return columnAnchors[columnIndex].position;
+            return columnAnchors[GetColumnAnchorIndex(columnIndex, columnCount)].position;
+        }
+
+        private int GetColumnAnchorIndex(int columnIndex, int columnCount)
+        {
+            if (columnCount <= 1) return columnAnchors.Length / 2;
+
+            float normalizedColumnIndex = columnIndex / (float)(columnCount - 1);
+            return Mathf.RoundToInt(normalizedColumnIndex * (columnAnchors.Length - 1));
         }
 
         private bool HasAnyColumnAnchors()
@@ -294,9 +302,10 @@ namespace PopSort
 
             for (int i = 0; i < columnCount; i++)
             {
-                if (columnAnchors[i] != null) continue;
+                int anchorIndex = GetColumnAnchorIndex(i, columnCount);
+                if (columnAnchors[anchorIndex] != null) continue;
 
-                Debug.LogError($"TrayManager cannot generate trays: Column Anchors element {i} is not assigned.", this);
+                Debug.LogError($"TrayManager cannot generate trays: Column Anchors element {anchorIndex} is not assigned.", this);
                 return false;
             }
 
