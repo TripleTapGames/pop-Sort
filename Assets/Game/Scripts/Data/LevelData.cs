@@ -20,7 +20,6 @@ namespace PopSort
         public int usefulBallUnlockDepth = 1;
         [Range(0f, 1f)] public float colourRepetition = 1f;
         [Range(0f, 1f)] public float verticalColourClustering = 1f;
-        [Range(2, 3)] public int preferredTrayColumnCount = 3;
     }
 
     [Serializable]
@@ -73,7 +72,7 @@ namespace PopSort
         public float beltSpeed = 0.2f;
         public int slotsPerTray = 3;
         public int beltSlotCount = 7;
-        [Range(2, 3)] public int maxTrayColumnCount = 3;
+        [Range(1, 3)] public int maxTrayColumnCount = 3;
         public TrayColumnData[] trayColumns;
         public DifficultyParameters difficultyParameters = new DifficultyParameters();
 
@@ -155,14 +154,14 @@ namespace PopSort
 
         public TrayColumnData[] GenerateTrayColumnsFromGrid()
         {
-            return GenerateTrayColumnsFromGrid(GetPreferredTrayColumnCount());
+            return GenerateTrayColumnsFromGrid(maxTrayColumnCount);
         }
 
         public TrayColumnData[] GenerateTrayColumnsFromGrid(int columnCount)
         {
             int[] ballCounts = CountBallsByColor();
             int trayCapacity = Mathf.Max(slotsPerTray, 1);
-            int clampedColumnCount = Mathf.Clamp(columnCount, 2, Mathf.Clamp(maxTrayColumnCount, 2, 3));
+            int clampedColumnCount = Mathf.Clamp(columnCount, 1, Mathf.Clamp(maxTrayColumnCount, 1, 3));
             List<TrayData>[] traysByColor = new List<TrayData>[ballCounts.Length];
 
             for (int colorId = 0; colorId < ballCounts.Length; colorId++)
@@ -304,15 +303,6 @@ namespace PopSort
                 unlockDepth,
                 lowVerticalClustering,
                 lowColourRepetition));
-        }
-
-        private int GetPreferredTrayColumnCount()
-        {
-            int preferredCount = difficultyParameters != null
-                ? difficultyParameters.preferredTrayColumnCount
-                : difficulty == LevelDifficulty.SuperHard || difficulty == LevelDifficulty.Hard ? 2 : 4;
-
-            return Mathf.Clamp(preferredCount, 2, Mathf.Clamp(maxTrayColumnCount, 2, 3));
         }
 
         private int GetUsefulBallUnlockDepth()

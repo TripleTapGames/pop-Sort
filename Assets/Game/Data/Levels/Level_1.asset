@@ -20,20 +20,10 @@ MonoBehaviour:
       ballCount: 2
     - enabled: 1
       colorId: 0
+      ballCount: 2
+    - enabled: 1
+      colorId: 0
       ballCount: 3
-    - enabled: 1
-      colorId: 0
-      ballCount: 2
-  - cells:
-    - enabled: 1
-      colorId: 0
-      ballCount: 2
-    - enabled: 1
-      colorId: 0
-      ballCount: 2
-    - enabled: 1
-      colorId: 0
-      ballCount: 2
   - cells:
     - enabled: 1
       colorId: 0
@@ -43,38 +33,54 @@ MonoBehaviour:
       ballCount: 3
     - enabled: 1
       colorId: 0
+      ballCount: 3
+  - cells:
+    - enabled: 1
+      colorId: 1
+      ballCount: 3
+    - enabled: 1
+      colorId: 1
+      ballCount: 3
+    - enabled: 1
+      colorId: 1
       ballCount: 3
   colorPalette:
   - {r: 1, g: 0.14999998, b: 0.14999998, a: 1}
+  - {r: 0.14999998, g: 1, b: 1, a: 1}
   popAssets:
   - {fileID: 21300000, guid: 33d01ec8787a744878699ffc2846ceaa, type: 3}
+  - {fileID: 21300000, guid: 54a9206e6fc314bc1be517a35596af7c, type: 3}
   trayAssets:
   - {fileID: 21300000, guid: f3342d78f138743238146624055b0bd5, type: 3}
+  - {fileID: 21300000, guid: ee157900fca744b5da9fde2461e589d0, type: 3}
   holderAssets:
   - {fileID: 21300000, guid: b3d647badf2b74936b0c0f940fbad891, type: 3}
+  - {fileID: 21300000, guid: 20a392eafe5d34f82a6b9441c62d348d, type: 3}
   blockAssets:
   - {fileID: 21300000, guid: 2bd25073761ba46a3821ce413211af9b, type: 3}
+  - {fileID: 21300000, guid: 1abe92b9f772c4ebf8da0a7cb309b685, type: 3}
   pressedAssets:
   - {fileID: 21300000, guid: 2cba20f08b5fb471b950d3933ff3f95c, type: 3}
-  colorCount: 1
-  beltSpeed: 0.2
+  - {fileID: 21300000, guid: 47cfbac975f7c4c5d850e58b7f4c5270, type: 3}
+  colorCount: 2
+  beltSpeed: 0.3
   slotsPerTray: 3
   beltSlotCount: 20
-  maxTrayColumnCount: 3
+  maxTrayColumnCount: 1
   trayColumns:
   - trays:
-    - colorId: 0
+    - colorId: 1
+      capacity: 3
+    - colorId: 1
+      capacity: 3
+    - colorId: 1
       capacity: 3
     - colorId: 0
       capacity: 3
     - colorId: 0
       capacity: 3
-  - trays:
     - colorId: 0
       capacity: 3
-    - colorId: 0
-      capacity: 3
-  - trays:
     - colorId: 0
       capacity: 3
     - colorId: 0
