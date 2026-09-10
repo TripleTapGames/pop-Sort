@@ -56,3 +56,6 @@ TagManager:
   - name: Ball
     uniqueID: 2193072501
     locked: 0
+  - name: ParticleEffect
+    uniqueID: 181279109
+    locked: 0
