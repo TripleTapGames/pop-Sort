@@ -55,6 +55,7 @@ namespace PaperSort.Game
 
         private SplineContainer splineContainer;
         private List<Transform> elementTransforms = new List<Transform>();
+        private List<SpriteRenderer> spriteRenderers = new List<SpriteRenderer>();
         private float[] progressOffsets;
 
 #if UNITY_EDITOR
@@ -151,13 +152,35 @@ namespace PaperSort.Game
 
         #endregion
 
+        private bool IsPrefabAsset()
+        {
+#if UNITY_EDITOR
+            return PrefabUtility.IsPartOfPrefabAsset(gameObject) || !gameObject.scene.IsValid();
+#else
+            return false;
+#endif
+        }
+
+        private bool HasAnyRollerChildren()
+        {
+            for (int i = 0; i < transform.childCount; i++)
+            {
+                Transform child = transform.GetChild(i);
+                if (child != null && child.name.StartsWith("Roller_2D_")) return true;
+            }
+            return false;
+        }
+
         private void Awake()
         {
+            if (IsPrefabAsset()) return;
             splineContainer = GetComponent<SplineContainer>();
         }
 
         private void OnEnable()
         {
+            if (IsPrefabAsset()) return;
+
             splineContainer = GetComponent<SplineContainer>();
             SetupElements();
 
@@ -172,6 +195,10 @@ namespace PaperSort.Game
         {
 #if UNITY_EDITOR
             EditorApplication.update -= OnEditorUpdate;
+            if (!Application.isPlaying && !IsPrefabAsset())
+            {
+                ClearElements();
+            }
 #endif
         }
 
@@ -179,10 +206,14 @@ namespace PaperSort.Game
         private void OnEditorUpdate()
         {
             if (Application.isPlaying || this == null || gameObject == null) return;
+            if (IsPrefabAsset()) return;
 
             if (!showEditorPreview)
             {
-                if (elementTransforms.Count > 0) ClearElements();
+                if (elementTransforms.Count > 0 || HasAnyRollerChildren())
+                {
+                    ClearElements();
+                }
                 return;
             }
 
@@ -214,57 +245,145 @@ namespace PaperSort.Game
 
         private void OnValidate()
         {
+            if (IsPrefabAsset()) return;
             if (splineContainer == null) splineContainer = GetComponent<SplineContainer>();
 #if UNITY_EDITOR
             EditorApplication.delayCall += () =>
             {
-                if (this != null) SetupElements();
+                if (this != null && !IsPrefabAsset()) SetupElements();
             };
 #endif
         }
 
         public void ClearElements()
         {
+            if (IsPrefabAsset()) return;
+
             for (int i = transform.childCount - 1; i >= 0; i--)
             {
                 Transform child = transform.GetChild(i);
                 if (child != null && child.name.StartsWith("Roller_2D_"))
                 {
                     if (Application.isPlaying)
+                    {
                         Destroy(child.gameObject);
+                    }
                     else
+                    {
+#if UNITY_EDITOR
+                        if (PrefabUtility.IsPartOfPrefabInstance(child.gameObject))
+                        {
+                            child.gameObject.SetActive(false);
+                            continue;
+                        }
+#endif
                         DestroyImmediate(child.gameObject);
+                    }
                 }
             }
             elementTransforms.Clear();
+            spriteRenderers.Clear();
         }
 
         public void SetupElements()
         {
-            ClearElements();
+            if (IsPrefabAsset()) return;
 
-            if (!Application.isPlaying && !showEditorPreview) return;
-            if (totalElements <= 0) return;
+            if (!Application.isPlaying && !showEditorPreview)
+            {
+                ClearElements();
+                return;
+            }
 
+            if (totalElements <= 0)
+            {
+                ClearElements();
+                return;
+            }
+
+            // Gather existing Roller_2D_ children for smart reuse
+            List<Transform> existing = new List<Transform>();
+            for (int i = 0; i < transform.childCount; i++)
+            {
+                Transform child = transform.GetChild(i);
+                if (child != null && child.name.StartsWith("Roller_2D_"))
+                {
+                    existing.Add(child);
+                }
+            }
+
+            // Remove excess children if count decreased
+            while (existing.Count > totalElements)
+            {
+                int lastIdx = existing.Count - 1;
+                Transform excess = existing[lastIdx];
+                existing.RemoveAt(lastIdx);
+                if (excess != null)
+                {
+                    if (Application.isPlaying)
+                    {
+                        Destroy(excess.gameObject);
+                    }
+                    else
+                    {
+#if UNITY_EDITOR
+                        if (PrefabUtility.IsPartOfPrefabInstance(excess.gameObject))
+                        {
+                            excess.gameObject.SetActive(false);
+                            continue;
+                        }
+#endif
+                        DestroyImmediate(excess.gameObject);
+                    }
+                }
+            }
+
+            elementTransforms.Clear();
+            spriteRenderers.Clear();
             progressOffsets = new float[totalElements];
             float spacing = 1f / totalElements;
 
+            // Reuse existing or instantiate missing elements
             for (int i = 0; i < totalElements; i++)
             {
-                GameObject obj = new GameObject($"Roller_2D_{i}");
-                obj.transform.SetParent(transform);
+                GameObject obj;
+                Transform t;
+                SpriteRenderer sr;
 
-                SpriteRenderer sr = obj.AddComponent<SpriteRenderer>();
+                if (i < existing.Count && existing[i] != null)
+                {
+                    t = existing[i];
+                    obj = t.gameObject;
+                    obj.name = $"Roller_2D_{i}";
+                    sr = obj.GetComponent<SpriteRenderer>();
+                    if (sr == null) sr = obj.AddComponent<SpriteRenderer>();
+                }
+                else
+                {
+                    obj = new GameObject($"Roller_2D_{i}");
+                    t = obj.transform;
+                    t.SetParent(transform);
+                    sr = obj.AddComponent<SpriteRenderer>();
+                }
+
+#if UNITY_EDITOR
+                if (!Application.isPlaying)
+                {
+                    // In edit mode, mark as DontSave so preview objects never serialize into scene or prefab files
+                    obj.hideFlags = HideFlags.DontSave;
+                }
+#endif
+
                 sr.sprite = rollerSprite;
                 sr.color = spriteColor;
                 sr.sortingLayerName = sortingLayerName;
                 sr.sortingOrder = sortingOrder;
 
-                elementTransforms.Add(obj.transform);
+                elementTransforms.Add(t);
+                spriteRenderers.Add(sr);
                 progressOffsets[i] = i * spacing;
             }
 
-            ApplyRollerScale();
             UpdatePositions(0f);
         }
 
@@ -289,9 +408,30 @@ namespace PaperSort.Game
 
         private void UpdatePositions(float deltaProgress)
         {
+            if (splineContainer == null) splineContainer = GetComponent<SplineContainer>();
+            if (splineContainer == null || splineContainer.Spline == null) return;
+            if (progressOffsets == null || progressOffsets.Length < elementTransforms.Count) return;
+
+            Vector3 parentLossyScale = transform.lossyScale;
+            Vector3 unscaledLocalScale = new Vector3(
+                spriteScale.x / (Mathf.Abs(parentLossyScale.x) > 0.0001f ? Mathf.Abs(parentLossyScale.x) : 1f),
+                spriteScale.y / (Mathf.Abs(parentLossyScale.y) > 0.0001f ? Mathf.Abs(parentLossyScale.y) : 1f),
+                1f
+            );
+
             for (int i = 0; i < elementTransforms.Count; i++)
             {
                 if (elementTransforms[i] == null) continue;
+
+                if (spriteRenderers.Count > i && spriteRenderers[i] != null)
+                {
+                    spriteRenderers[i].sprite = rollerSprite;
+                    spriteRenderers[i].color = spriteColor;
+                    spriteRenderers[i].sortingLayerName = sortingLayerName;
+                    spriteRenderers[i].sortingOrder = sortingOrder;
+                }
+
+                elementTransforms[i].localScale = unscaledLocalScale;
 
                 progressOffsets[i] = (progressOffsets[i] + deltaProgress) % 1f;
                 if (progressOffsets[i] < 0f) progressOffsets[i] += 1f;
@@ -310,22 +450,6 @@ namespace PaperSort.Game
                 {
                     elementTransforms[i].rotation = Quaternion.Euler(0f, 0f, rotationOffset);
                 }
-            }
-        }
-
-        // Visual properties are static while the game runs. Applying them at setup
-        // avoids repeating renderer property writes for every roller every frame.
-        private void ApplyRollerScale()
-        {
-            Vector3 parentLossyScale = transform.lossyScale;
-            Vector3 unscaledLocalScale = new Vector3(
-                spriteScale.x / (Mathf.Abs(parentLossyScale.x) > 0.0001f ? Mathf.Abs(parentLossyScale.x) : 1f),
-                spriteScale.y / (Mathf.Abs(parentLossyScale.y) > 0.0001f ? Mathf.Abs(parentLossyScale.y) : 1f),
-                1f);
-
-            foreach (Transform roller in elementTransforms)
-            {
-                if (roller != null) roller.localScale = unscaledLocalScale;
             }
         }
 
