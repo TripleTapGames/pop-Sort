@@ -211,11 +211,11 @@ MonoBehaviour:
   rotationOffset: 0
   sortingLayerName: Default
   sortingOrder: 2
-  spriteScale: {x: 0.025, y: 0.025}
+  spriteScale: {x: 0.022, y: 0.022}
   totalElements: 20
   speed: 0.5
   moveReverse: 0
-  showEditorPreview: 1
+  showEditorPreview: 0
   animateInEditor: 0
 --- !u!1 &3720811592772633519
 GameObject:
@@ -244,7 +244,7 @@ Transform:
   m_PrefabAsset: {fileID: 0}
   m_GameObject: {fileID: 3720811592772633519}
   serializedVersion: 2
-  m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
+  m_LocalRotation: {x: -0, y: -0, z: -0, w: 1}
   m_LocalPosition: {x: 0, y: -1.43, z: 0}
   m_LocalScale: {x: 0.5178268, y: 0.6180193, z: 0.3968021}
   m_ConstrainProportionsScale: 0
@@ -388,9 +388,9 @@ Transform:
   m_PrefabAsset: {fileID: 0}
   m_GameObject: {fileID: 7479259687561269022}
   serializedVersion: 2
-  m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
-  m_LocalPosition: {x: 0, y: -0.09, z: 0}
-  m_LocalScale: {x: 1.0877343, y: 1.1700001, z: 1}
+  m_LocalRotation: {x: -0, y: -0, z: -0, w: 1}
+  m_LocalPosition: {x: 0, y: -0.08999962, z: 0}
+  m_LocalScale: {x: 1.0877343, y: 1.1700002, z: 1}
   m_ConstrainProportionsScale: 0
   m_Children: []
   m_Father: {fileID: 565922051352024744}
