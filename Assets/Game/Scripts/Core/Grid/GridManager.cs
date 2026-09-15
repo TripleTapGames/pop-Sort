@@ -201,14 +201,14 @@ namespace PopSort
 
         private void PlayPopRipple(Vector3 position)
         {
-            // if (popRipplePrefab == null) return;
+            if (popRipplePrefab == null) return;
 
-            // ParticleSystem ripple = GetAvailablePopRipple();
-            // ripple.transform.position = position;
-            // ripple.transform.localScale = Vector3.one * popRippleScale;
-            // ripple.gameObject.SetActive(true);
-            // ripple.Clear(true);
-            // ripple.Play(true);
+            ParticleSystem ripple = GetAvailablePopRipple();
+            ripple.transform.position = position;
+            ripple.transform.localScale = Vector3.one * popRippleScale;
+            ripple.gameObject.SetActive(true);
+            ripple.Clear(true);
+            ripple.Play(true);
         }
 
         private ParticleSystem GetAvailablePopRipple()
