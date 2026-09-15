@@ -45,10 +45,16 @@ namespace PopSort
         [SerializeField] private TrayCompletionVfx completionVfxPrefab;
         [SerializeField, Min(0.01f)] private float completionVfxLifetime = 0.8f;
         [SerializeField, Min(0.01f)] private float completionVfxScale = 1f;
+
+        [Header("Animation Event VFX")]
+        [SerializeField] private ParticleSystem trayOpenVfxPrefab;
+        [SerializeField] private ParticleSystem trayFilledVfxPrefab;
         private TrayColumn[] trayColumns;
 
         private readonly List<GameObject> generatedObjects = new List<GameObject>();
         private readonly List<TrayCompletionVfx> completionVfxInstances = new List<TrayCompletionVfx>();
+        private readonly List<ParticleSystem> trayOpenVfxInstances = new List<ParticleSystem>();
+        private readonly List<ParticleSystem> trayFilledVfxInstances = new List<ParticleSystem>();
 
         private void Start()
         {
@@ -95,7 +101,9 @@ namespace PopSort
                         levelData.GetTrayCoverAsset(trays[trayIndex].colorId),
                         ballPool,
                         trayLandingSettings,
-                        PlayCompletionVfx);
+                        PlayCompletionVfx,
+                        PlayTrayOpenVfx,
+                        PlayTrayFilledVfx);
                     spawnedSlots[trayIndex] = traySlot;
                     spawnedTrayCount++;
                 }
@@ -231,6 +239,49 @@ namespace PopSort
             foreach (TrayCompletionVfx instance in completionVfxInstances)
             {
                 if (instance != null) instance.StopAndHide();
+            }
+
+            StopAnimationVfx(trayOpenVfxInstances);
+            StopAnimationVfx(trayFilledVfxInstances);
+        }
+
+        private void PlayTrayOpenVfx(Vector3 position) => PlayAnimationVfx(trayOpenVfxPrefab, trayOpenVfxInstances, position);
+
+        private void PlayTrayFilledVfx(Vector3 position) => PlayAnimationVfx(trayFilledVfxPrefab, trayFilledVfxInstances, position);
+
+        private void PlayAnimationVfx(ParticleSystem prefab, List<ParticleSystem> instances, Vector3 position)
+        {
+            if (prefab == null) return;
+
+            ParticleSystem effect = GetAvailableAnimationVfx(prefab, instances);
+            effect.transform.position = position;
+            effect.gameObject.SetActive(true);
+            effect.Clear(true);
+            effect.Play(true);
+        }
+
+        private ParticleSystem GetAvailableAnimationVfx(ParticleSystem prefab, List<ParticleSystem> instances)
+        {
+            foreach (ParticleSystem effect in instances)
+            {
+                if (effect != null && !effect.IsAlive(true)) return effect;
+            }
+
+            ParticleSystem newEffect = Instantiate(prefab, transform);
+            newEffect.Stop(true, ParticleSystemStopBehavior.StopEmittingAndClear);
+            newEffect.gameObject.SetActive(false);
+            instances.Add(newEffect);
+            return newEffect;
+        }
+
+        private static void StopAnimationVfx(List<ParticleSystem> instances)
+        {
+            foreach (ParticleSystem effect in instances)
+            {
+                if (effect == null) continue;
+
+                effect.Stop(true, ParticleSystemStopBehavior.StopEmittingAndClear);
+                effect.gameObject.SetActive(false);
             }
         }
 

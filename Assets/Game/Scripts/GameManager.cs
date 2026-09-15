@@ -129,6 +129,7 @@ namespace PopSort
             trayManager?.LoadLevelData(nextLevel);
             // Releases balls in transient states (e.g. still falling) that no subsystem list tracks.
             ballPool?.ReleaseAll();
+            ballPool?.Prewarm(nextLevel.TotalBallCount());
             beltQueueManager?.SetLevelData(nextLevel);
             gridManager?.SpawnGridFromLevelData(nextLevel);
             levelNumber = sequenceIndex + 1;

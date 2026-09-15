@@ -123,10 +123,10 @@ namespace PopSort
 
         public void SetCount(int count)
         {
-            if (countLabel == null) return;
+            // if (countLabel == null) return;
 
-            countLabel.text = count.ToString();
-            countLabel.gameObject.SetActive(count > 1);
+            // countLabel.text = count.ToString();
+            // countLabel.gameObject.SetActive(count > 1);
         }
 
         public void SetSprite(Sprite sprite)

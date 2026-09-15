@@ -22,6 +22,16 @@ namespace PopSort
             return ball;
         }
 
+        public void Prewarm(int count)
+        {
+            int warmupCount = Mathf.Max(0, count);
+            for (int index = 0; index < warmupCount; index++)
+            {
+                Ball ball = pool.Get();
+                pool.Release(ball);
+            }
+        }
+
         public void Release(Ball ball)
         {
             if (ball == null || !activeBalls.Remove(ball)) return;

@@ -79,6 +79,8 @@ namespace PopSort
         private bool hasLoggedMissingSlotPosition;
         private TrayLandingSettings landingSettings;
         private Action<Vector3> onCompletionVfx;
+        private Action<Vector3> onOpenVfx;
+        private Action<Vector3> onFilledVfx;
         private Vector3 trayRootBaseLocalPosition;
         private Coroutine trayImpactRoutine;
 
@@ -101,7 +103,9 @@ namespace PopSort
             Sprite trayCoverSprite,
             BallPool ballPool,
             TrayLandingSettings landingSettings,
-            Action<Vector3> completionVfxCallback)
+            Action<Vector3> completionVfxCallback,
+            Action<Vector3> openVfxCallback,
+            Action<Vector3> filledVfxCallback)
         {
             this.colorId = colorId;
             this.capacity = Mathf.Max(capacity, 1);
@@ -110,6 +114,8 @@ namespace PopSort
             this.ballPool = ballPool;
             this.landingSettings = landingSettings;
             onCompletionVfx = completionVfxCallback;
+            onOpenVfx = openVfxCallback;
+            onFilledVfx = filledVfxCallback;
             if (trayImpactRoutine != null) StopCoroutine(trayImpactRoutine);
             trayImpactRoutine = null;
             CaptureTrayRootPosition();
@@ -171,6 +177,18 @@ namespace PopSort
         public void InvokeTrayEntering()
         {
             onTrayEntering?.Invoke();
+        }
+
+        // Called by the TrayOpen animation event after the cover begins opening.
+        public void PlayOpenVfxFromAnimationEvent()
+        {
+            onOpenVfx?.Invoke(transform.TransformPoint(new Vector3(0f, -0.16f, 0f)));
+        }
+
+        // Called by the TrayFilled animation event when the tray completes.
+        public void PlayFilledVfxFromAnimationEvent()
+        {
+            onFilledVfx?.Invoke(transform.TransformPoint(new Vector3(0f, -0.003f, 0f)));
         }
 
         // Used for trays that are already active when the level is created.

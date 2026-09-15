@@ -182,7 +182,7 @@ namespace PaperSort.Game
             if (IsPrefabAsset()) return;
 
             splineContainer = GetComponent<SplineContainer>();
-            SetupElements();
+            if (!Application.isPlaying) SetupElements();
 
 #if UNITY_EDITOR
             lastEditorTime = EditorApplication.timeSinceStartup;
