@@ -7,9 +7,9 @@ public class BallHighlight : MonoBehaviour
 
     private void LateUpdate()
     {
-        if (ball == null) return;
+        // if (ball == null) return;
 
-        transform.position = ball.position + (Vector3)worldOffset;
-        transform.rotation = Quaternion.identity;
+        // transform.position = ball.position + (Vector3)worldOffset;
+        // transform.rotation = Quaternion.identity;
     }
 }

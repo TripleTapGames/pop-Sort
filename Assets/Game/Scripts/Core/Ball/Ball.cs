@@ -227,6 +227,8 @@ namespace PopSort
 
         public void SetFunnelKinematic()
         {
+            if (State == BallState.FunnelWaiting && rb.simulated && rb.bodyType == RigidbodyType2D.Kinematic && !col.isTrigger) return;
+
             State = BallState.FunnelWaiting;
             rb.simulated = true;
             rb.bodyType = RigidbodyType2D.Kinematic;
@@ -239,6 +241,8 @@ namespace PopSort
         // with the remaining dynamic balls while being guided to the belt exit.
         public void SetFunnelExtracting()
         {
+            if (State == BallState.FunnelWaiting && rb.simulated && rb.bodyType == RigidbodyType2D.Kinematic && col.isTrigger) return;
+
             State = BallState.FunnelWaiting;
             rb.simulated = true;
             rb.bodyType = RigidbodyType2D.Kinematic;
@@ -249,6 +253,8 @@ namespace PopSort
 
         public void SetFunnelDynamic()
         {
+            if (State == BallState.FunnelWaiting && rb.simulated && rb.bodyType == RigidbodyType2D.Dynamic && !col.isTrigger) return;
+
             State = BallState.FunnelWaiting;
             rb.simulated = true;
             rb.bodyType = RigidbodyType2D.Dynamic;

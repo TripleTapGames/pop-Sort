@@ -124,12 +124,12 @@ namespace PopSort
         public bool Fill(Ball ball)
         {
             ball.BeginTrayLanding();
-            Vector3 targetPosition = GetSlotTargetPosition(placedBalls.Count);
+            int slotIndex = placedBalls.Count;
             LastIntakeMoveTime = landingSettings.TotalDuration;
             placedBalls.Add(ball);
             activeLandingCount++;
             lastLandingComplete = false;
-            StartCoroutine(LandBallInSlot(ball, targetPosition));
+            StartCoroutine(LandBallInSlot(ball, slotIndex));
 
             hasReachedCapacity = placedBalls.Count >= capacity;
             return hasReachedCapacity;
@@ -183,7 +183,7 @@ namespace PopSort
             }
         }
 
-        private IEnumerator LandBallInSlot(Ball ball, Vector3 targetPosition)
+        private IEnumerator LandBallInSlot(Ball ball, int slotIndex)
         {
             Vector3 startPosition = ball.transform.position;
             float duration = Mathf.Max(landingSettings.duration, 0f);
@@ -195,6 +195,9 @@ namespace PopSort
                 float normalizedTime = Mathf.Clamp01(elapsed / duration);
                 float dropProgress = landingSettings.EvaluateDropProgress(normalizedTime);
                 float horizontalProgress = Mathf.SmoothStep(0f, 1f, normalizedTime);
+                // Tray animations can move the root while a ball is in flight. Resolve
+                // the slot's world position each frame so the ball finishes centered.
+                Vector3 targetPosition = GetSlotTargetPosition(slotIndex);
                 float drift = (targetPosition.x - startPosition.x) * landingSettings.horizontalDrift *
                     Mathf.Sin(normalizedTime * Mathf.PI);
 
@@ -205,7 +208,7 @@ namespace PopSort
                 yield return null;
             }
 
-            ball.transform.position = targetPosition;
+            ball.transform.position = GetSlotTargetPosition(slotIndex);
             // Keep landed balls visually attached to this tray through its slide,
             // filled, and disappearance animations.
             ball.transform.SetParent(trayRoot != null ? trayRoot : transform, true);
