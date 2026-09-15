@@ -19,7 +19,7 @@ namespace PopSort
         [SerializeField] private TapInputManager tapInputManager;
         [SerializeField] private LevelData[] levelSequence;
         [Header("Performance")]
-        [SerializeField, Range(15, 120)] private int targetFrameRate = 30;
+        [SerializeField, Range(15, 120)] private int targetFrameRate = 60;
         [Tooltip("Resume the last reached level when the game is launched.")]
         [SerializeField] private bool resumeSavedProgress = true;
         [SerializeField] private int levelNumber = 1;
