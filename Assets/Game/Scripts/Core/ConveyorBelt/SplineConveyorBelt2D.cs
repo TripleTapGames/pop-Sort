@@ -423,14 +423,6 @@ namespace PaperSort.Game
             {
                 if (elementTransforms[i] == null) continue;
 
-                if (spriteRenderers.Count > i && spriteRenderers[i] != null)
-                {
-                    spriteRenderers[i].sprite = rollerSprite;
-                    spriteRenderers[i].color = spriteColor;
-                    spriteRenderers[i].sortingLayerName = sortingLayerName;
-                    spriteRenderers[i].sortingOrder = sortingOrder;
-                }
-
                 elementTransforms[i].localScale = unscaledLocalScale;
 
                 progressOffsets[i] = (progressOffsets[i] + deltaProgress) % 1f;

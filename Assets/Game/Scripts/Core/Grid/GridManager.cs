@@ -26,11 +26,16 @@ namespace PopSort
         [SerializeField, Min(0f)] private float launchPunchDuration = 0.12f;
         [SerializeField, Range(0f, 0.5f)] private float launchPunchStrength = 0.12f;
 
+        [Header("Pop Ripple")]
+        [SerializeField] private ParticleSystem popRipplePrefab;
+        [SerializeField, Min(0.01f)] private float popRippleScale = 0.7f;
+
         public event Action OnGridCleared;
 
         private readonly List<Ball> aliveBalls = new List<Ball>();
         private readonly List<BallGroup> groups = new List<BallGroup>();
         private readonly List<Transform> holders = new List<Transform>();
+        private readonly List<ParticleSystem> popRipples = new List<ParticleSystem>();
         private bool hasLoggedMissingBallHolderPrefab;
 
         private void Start()
@@ -94,6 +99,7 @@ namespace PopSort
         public void ClearGrid()
         {
             StopAllCoroutines();
+            StopPopRipples();
 
             foreach (Ball ball in aliveBalls)
             {
@@ -191,6 +197,43 @@ namespace PopSort
             extraBall.PopBurstFromState(launchVelocity, RandomBurstAngularVelocity());
             extraBall.PlayLaunchPunch(launchPunchDuration, launchPunchStrength);
             aliveBalls.Add(extraBall);
+        }
+
+        private void PlayPopRipple(Vector3 position)
+        {
+            if (popRipplePrefab == null) return;
+
+            ParticleSystem ripple = GetAvailablePopRipple();
+            ripple.transform.position = position;
+            ripple.transform.localScale = Vector3.one * popRippleScale;
+            ripple.gameObject.SetActive(true);
+            ripple.Clear(true);
+            ripple.Play(true);
+        }
+
+        private ParticleSystem GetAvailablePopRipple()
+        {
+            foreach (ParticleSystem ripple in popRipples)
+            {
+                if (ripple != null && !ripple.IsAlive(true)) return ripple;
+            }
+
+            ParticleSystem newRipple = Instantiate(popRipplePrefab, transform);
+            newRipple.Stop(true, ParticleSystemStopBehavior.StopEmittingAndClear);
+            newRipple.gameObject.SetActive(false);
+            popRipples.Add(newRipple);
+            return newRipple;
+        }
+
+        private void StopPopRipples()
+        {
+            foreach (ParticleSystem ripple in popRipples)
+            {
+                if (ripple == null) continue;
+
+                ripple.Stop(true, ParticleSystemStopBehavior.StopEmittingAndClear);
+                ripple.gameObject.SetActive(false);
+            }
         }
 
         private Vector2 RandomBurstVelocity()
@@ -356,6 +399,7 @@ namespace PopSort
 
                 popping = true;
                 Vector3 popPosition = holder.position;
+                owner.PlayPopRipple(popPosition);
                 Vector2 launchVelocity = owner.RandomBurstVelocity();
                 holderDisplay?.SetPressed();
                 remainingBalls--;
