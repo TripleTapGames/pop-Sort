@@ -29,10 +29,10 @@ MonoBehaviour:
       ballCount: 4
     - enabled: 1
       colorId: 3
-      ballCount: 4
-    - enabled: 0
-      colorId: 0
-      ballCount: 0
+      ballCount: 3
+    - enabled: 1
+      colorId: 5
+      ballCount: 1
     - enabled: 1
       colorId: 0
       ballCount: 1
@@ -54,7 +54,7 @@ MonoBehaviour:
       ballCount: 1
     - enabled: 1
       colorId: 6
-      ballCount: 4
+      ballCount: 3
     - enabled: 1
       colorId: 5
       ballCount: 1
@@ -70,7 +70,7 @@ MonoBehaviour:
       ballCount: 1
     - enabled: 1
       colorId: 0
-      ballCount: 1
+      ballCount: 2
     - enabled: 1
       colorId: 6
       ballCount: 2
@@ -117,10 +117,10 @@ MonoBehaviour:
       ballCount: 4
     - enabled: 1
       colorId: 2
-      ballCount: 1
+      ballCount: 2
     - enabled: 1
       colorId: 2
-      ballCount: 1
+      ballCount: 2
     - enabled: 1
       colorId: 4
       ballCount: 1
@@ -195,14 +195,16 @@ MonoBehaviour:
       capacity: 3
     - colorId: 1
       capacity: 3
-    - colorId: 2
-      capacity: 3
-    - colorId: 2
+    - colorId: 6
       capacity: 3
     - colorId: 6
       capacity: 3
-    - colorId: 4
+    - colorId: 6
       capacity: 3
+    - colorId: 6
+      capacity: 3
+    - colorId: 6
+      capacity: 1
     - colorId: 4
       capacity: 3
     - colorId: 4
@@ -211,23 +213,27 @@ MonoBehaviour:
       capacity: 3
     - colorId: 3
       capacity: 3
-    - colorId: 3
+    - colorId: 5
       capacity: 3
     - colorId: 5
       capacity: 3
   - trays:
     - colorId: 0
       capacity: 3
+    - colorId: 0
+      capacity: 3
+    - colorId: 0
+      capacity: 3
+    - colorId: 0
+      capacity: 2
+    - colorId: 2
+      capacity: 3
+    - colorId: 2
+      capacity: 3
+    - colorId: 2
+      capacity: 1
     - colorId: 6
       capacity: 3
-    - colorId: 6
-      capacity: 3
-    - colorId: 6
-      capacity: 3
-    - colorId: 6
-      capacity: 3
-    - colorId: 6
-      capacity: 3
     - colorId: 3
       capacity: 3
     - colorId: 3
@@ -237,10 +243,10 @@ MonoBehaviour:
     - colorId: 3
       capacity: 3
     - colorId: 3
+      capacity: 1
+    - colorId: 5
       capacity: 3
-    - colorId: 3
-      capacity: 3
-    - colorId: 3
+    - colorId: 5
       capacity: 3
   difficultyParameters:
     maxCanonicalConveyorPressure: 0.6
