@@ -2758,7 +2758,7 @@ MonoBehaviour:
   ballPool: {fileID: 1854750702}
   tapInputManager: {fileID: 1801561012}
   levelSequence:
-  - {fileID: 11400000, guid: d2505f7057c3e6041995c163a1fd4c4b, type: 2}
+  - {fileID: 11400000, guid: ae13cd3dfa8fab840899ae6ec4d26d8e, type: 2}
   - {fileID: 11400000, guid: ea096330ed67f0643b90a7b44fbaa640, type: 2}
   - {fileID: 11400000, guid: c26ffacb8d3991448a08fb1f2144f360, type: 2}
   - {fileID: 11400000, guid: 97200c51e856cc34bb785b8f46aee186, type: 2}
@@ -3039,7 +3039,7 @@ PrefabInstance:
       objectReference: {fileID: 0}
     - target: {fileID: 5308370126825196034, guid: f335b27bba7ac49f0baa29cb6bdf3c2e, type: 3}
       propertyPath: m_Alpha
-      value: 1
+      value: 0
       objectReference: {fileID: 0}
     - target: {fileID: 5308370126825196034, guid: f335b27bba7ac49f0baa29cb6bdf3c2e, type: 3}
       propertyPath: m_BlocksRaycasts
