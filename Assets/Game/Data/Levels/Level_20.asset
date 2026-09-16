@@ -203,13 +203,11 @@ MonoBehaviour:
       capacity: 3
     - colorId: 6
       capacity: 3
-    - colorId: 6
-      capacity: 1
-    - colorId: 4
+    - colorId: 3
       capacity: 3
-    - colorId: 4
+    - colorId: 3
       capacity: 3
-    - colorId: 4
+    - colorId: 3
       capacity: 3
     - colorId: 3
       capacity: 3
@@ -225,25 +223,23 @@ MonoBehaviour:
     - colorId: 0
       capacity: 3
     - colorId: 0
-      capacity: 2
-    - colorId: 2
       capacity: 3
     - colorId: 2
       capacity: 3
     - colorId: 2
-      capacity: 1
+      capacity: 3
+    - colorId: 2
+      capacity: 3
     - colorId: 6
       capacity: 3
-    - colorId: 3
+    - colorId: 4
+      capacity: 3
+    - colorId: 4
+      capacity: 3
+    - colorId: 4
       capacity: 3
     - colorId: 3
       capacity: 3
-    - colorId: 3
-      capacity: 3
-    - colorId: 3
-      capacity: 3
-    - colorId: 3
-      capacity: 1
     - colorId: 5
       capacity: 3
     - colorId: 5
