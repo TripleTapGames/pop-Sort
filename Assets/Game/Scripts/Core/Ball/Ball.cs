@@ -20,6 +20,9 @@ namespace PopSort
         [SerializeField] private TextMeshProUGUI countLabel;
         [SerializeField] private SpriteRenderer highlight;
 
+        [SerializeField] private GameObject shadow;
+
+
         [Header("Marble Flight")]
         [SerializeField] private float gravityScale = 1.5f;
         [SerializeField, Range(0f, 1f)] private float bounceRetention = 0.22f;
@@ -53,6 +56,7 @@ namespace PopSort
         private Vector3 visualBaseLocalScale;
         private int prefabCanvasSortingOrder;
         private int prefabHighlightSortingOrder;
+        private bool prefabShadowActive;
         private float queueWobblePhase;
         private Coroutine scaleFeedbackRoutine;
 
@@ -80,6 +84,7 @@ namespace PopSort
             visualBaseLocalScale = prefabLocalScale;
             prefabCanvasSortingOrder = worldCanvas != null ? worldCanvas.sortingOrder : 0;
             prefabHighlightSortingOrder = highlight != null ? highlight.sortingOrder : 0;
+            prefabShadowActive = shadow != null && shadow.activeSelf;
         }
 
         private void Update()
@@ -96,6 +101,7 @@ namespace PopSort
             RestorePrefabScale();
             RestoreSortingOrders();
             ColorId = colorId;
+            if (shadow != null) shadow.SetActive(prefabShadowActive);
             if (sprite != null)
             {
                 SetHighlightSprite(sprite);
@@ -203,6 +209,7 @@ namespace PopSort
         public void SetQueued()
         {
             State = BallState.Queued;
+            if (shadow != null) shadow.SetActive(false);
             rb.simulated = false;
             rb.bodyType = RigidbodyType2D.Kinematic;
             col.isTrigger = true;

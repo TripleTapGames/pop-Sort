@@ -6,10 +6,24 @@ public class GameWin : MonoBehaviour
 {
     [SerializeField] private CanvasGroup canvasGroup;
     [SerializeField] private Button nextButton;
+    [SerializeField] private Animator animator;
+
+    private void Awake()
+    {
+        if (animator == null) animator = GetComponentInChildren<Animator>(true);
+        if (animator != null) animator.updateMode = AnimatorUpdateMode.UnscaledTime;
+    }
 
     public void Show(Action onNext)
     {
         SetVisible(true);
+        if (animator != null)
+        {
+            animator.gameObject.SetActive(true);
+            animator.enabled = true;
+            animator.Play("Base Layer.UIWindow_Win", 0, 0f);
+            animator.Update(0f);
+        }
 
         if (nextButton != null)
         {
@@ -21,6 +35,7 @@ public class GameWin : MonoBehaviour
     public void Hide()
     {
         SetVisible(false);
+        if (animator != null) animator.enabled = false;
     }
 
     private void SetVisible(bool visible)

@@ -600,6 +600,7 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   canvasGroup: {fileID: 5373429007052649446}
   retryButton: {fileID: 852119463713866970}
+  animator: {fileID: 2063532820642847108}
 --- !u!225 &5373429007052649446
 CanvasGroup:
   m_ObjectHideFlags: 0
