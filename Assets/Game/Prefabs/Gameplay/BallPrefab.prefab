@@ -16,7 +16,7 @@ GameObject:
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
   m_StaticEditorFlags: 0
-  m_IsActive: 0
+  m_IsActive: 1
 --- !u!4 &630494475065128381
 Transform:
   m_ObjectHideFlags: 0
@@ -197,6 +197,7 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   countLabel: {fileID: 0}
   highlight: {fileID: 5698299342473795973}
+  shadow: {fileID: 0}
   gravityScale: 1.5
   bounceRetention: 0.699
   minimumBounceSpeed: 0.35
