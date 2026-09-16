@@ -31,11 +31,13 @@ namespace PopSort
         [SerializeField, Min(0.01f)] private float popRippleScale = 0.7f;
 
         public event Action OnGridCleared;
+        public bool AreAllHoldersPopped { get; private set; }
 
         private readonly List<Ball> aliveBalls = new List<Ball>();
         private readonly List<BallGroup> groups = new List<BallGroup>();
         private readonly List<Transform> holders = new List<Transform>();
         private readonly List<ParticleSystem> popRipples = new List<ParticleSystem>();
+        private readonly Dictionary<int, int> unspawnedBallCounts = new Dictionary<int, int>();
         private bool hasLoggedMissingBallHolderPrefab;
 
         private void Start()
@@ -108,6 +110,8 @@ namespace PopSort
 
             aliveBalls.Clear();
             groups.Clear();
+            unspawnedBallCounts.Clear();
+            AreAllHoldersPopped = false;
 
             foreach (Transform holder in holders)
             {
@@ -188,6 +192,7 @@ namespace PopSort
             Vector2 launchVelocity,
             bool playHolderFeedback = true)
         {
+            ConsumeUnspawnedBall(colorId);
             if (playHolderFeedback) holder?.GetComponent<BallHolder>()?.PlayReleaseFeedback();
             Ball extraBall = ballPool.Get();
             if (holder != null) extraBall.transform.SetParent(holder, false);
@@ -332,7 +337,41 @@ namespace PopSort
                 if (group != null && !group.IsPopping) return;
             }
 
+            if (AreAllHoldersPopped) return;
+
+            AreAllHoldersPopped = true;
             OnGridCleared?.Invoke();
+        }
+
+        /// <summary>
+        /// Adds balls still scheduled by holder-release coroutines to a caller-owned
+        /// color-count map. These balls are not in BallPool.ActiveBalls yet.
+        /// </summary>
+        public void AddUnspawnedBallCounts(IDictionary<int, int> counts)
+        {
+            if (counts == null) return;
+
+            foreach (KeyValuePair<int, int> entry in unspawnedBallCounts)
+            {
+                if (entry.Value <= 0) continue;
+                counts.TryGetValue(entry.Key, out int currentCount);
+                counts[entry.Key] = currentCount + entry.Value;
+            }
+        }
+
+        private void TrackUnspawnedBalls(int colorId, int count)
+        {
+            if (count <= 0) return;
+            unspawnedBallCounts.TryGetValue(colorId, out int currentCount);
+            unspawnedBallCounts[colorId] = currentCount + count;
+        }
+
+        private void ConsumeUnspawnedBall(int colorId)
+        {
+            if (!unspawnedBallCounts.TryGetValue(colorId, out int currentCount)) return;
+
+            if (currentCount <= 1) unspawnedBallCounts.Remove(colorId);
+            else unspawnedBallCounts[colorId] = currentCount - 1;
         }
 
         private void RefreshGridBallSprites()
@@ -406,6 +445,7 @@ namespace PopSort
                 holderDisplay?.SetCount(remainingBalls);
                 if (remainingBalls > 0)
                 {
+                    owner.TrackUnspawnedBalls(colorId, remainingBalls + 1);
                     owner.SpawnExtraBall(colorId, popPosition, holder, launchVelocity);
                     owner.StartCoroutine(owner.ReleaseRemainingBalls(
                         colorId,
@@ -417,6 +457,7 @@ namespace PopSort
                 }
                 else
                 {
+                    owner.TrackUnspawnedBalls(colorId, 1);
                     owner.StartCoroutine(owner.ReleaseSingleBallAfterFeedback(
                         colorId,
                         popPosition,

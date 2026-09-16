@@ -2578,6 +2578,8 @@ MonoBehaviour:
   ballPopSfx: {fileID: 8300000, guid: 6720130f5ba9f4dc1adaadab0f29752b, type: 3}
   ballLandedInTraySfx: {fileID: 8300000, guid: 44d0a93897f6ab145ac4555e7c8437f1, type: 3}
   trayFilledSfx: {fileID: 8300000, guid: dd0fb47a6cb539f48ae63f8747d94074, type: 3}
+  levelWonSfx: {fileID: 8300000, guid: f76bc1a6b683e458c98e5ddace4b87a6, type: 3}
+  levelFailedSfx: {fileID: 8300000, guid: 15d5be7978bd76241b823e860e2deb3c, type: 3}
 --- !u!1 &2038067616
 GameObject:
   m_ObjectHideFlags: 0
@@ -2758,7 +2760,7 @@ MonoBehaviour:
   ballPool: {fileID: 1854750702}
   tapInputManager: {fileID: 1801561012}
   levelSequence:
-  - {fileID: 11400000, guid: ae13cd3dfa8fab840899ae6ec4d26d8e, type: 2}
+  - {fileID: 11400000, guid: d2505f7057c3e6041995c163a1fd4c4b, type: 2}
   - {fileID: 11400000, guid: ea096330ed67f0643b90a7b44fbaa640, type: 2}
   - {fileID: 11400000, guid: c26ffacb8d3991448a08fb1f2144f360, type: 2}
   - {fileID: 11400000, guid: 97200c51e856cc34bb785b8f46aee186, type: 2}
@@ -2786,6 +2788,7 @@ MonoBehaviour:
   targetFrameRate: 60
   resumeSavedProgress: 1
   levelNumber: 1
+  fastFinishTimeScale: 2
   gameWinPanel: {fileID: 1809894327}
   gameLoosePanel: {fileID: 2004173765}
   txt_levelNo: {fileID: 1437286311}

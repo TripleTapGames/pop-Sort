@@ -1,10 +1,22 @@
 using System.Collections;
+using System.Collections.Generic;
 using UnityEngine;
 
 namespace PopSort
 {
     public class TrayColumn : MonoBehaviour
     {
+        public readonly struct RemainingTrayRequirement
+        {
+            public RemainingTrayRequirement(int colorId, int capacity)
+            {
+                ColorId = colorId;
+                Capacity = capacity;
+            }
+
+            public int ColorId { get; }
+            public int Capacity { get; }
+        }
         [SerializeField] private TraySlot[] traySlots; // ordered front (active first) to back
 
         [Header("Tray Transition Timing")]
@@ -64,6 +76,20 @@ namespace PopSort
             }
 
             return true;
+        }
+
+        // Ordered front-to-back, with already-filled capacity removed. This is a
+        // snapshot only; it does not alter tray state or transitions.
+        public void AddRemainingRequirements(List<RemainingTrayRequirement> requirements)
+        {
+            if (requirements == null || traySlots == null) return;
+
+            for (int index = activeIndex; index < traySlots.Length; index++)
+            {
+                TraySlot slot = traySlots[index];
+                if (slot == null || slot.RemainingCapacity <= 0) continue;
+                requirements.Add(new RemainingTrayRequirement(slot.ColorId, slot.RemainingCapacity));
+            }
         }
 
         private IEnumerator ConsumeActiveTray(TraySlot activeSlot)

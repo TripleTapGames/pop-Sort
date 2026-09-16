@@ -186,6 +186,64 @@ namespace PopSort
             return true;
         }
 
+        /// <summary>
+        /// Checks whether the supplied in-transit balls can satisfy the remaining
+        /// tray sequence. It is deliberately read-only and consumes only local
+        /// count copies while respecting each column's front-to-back tray order.
+        /// </summary>
+        public bool CanResolveRemainingBalls(IReadOnlyDictionary<int, int> inTransitBallCounts)
+        {
+            if (trayColumns == null || trayColumns.Length == 0 || inTransitBallCounts == null) return false;
+
+            Dictionary<int, int> availableCounts = new Dictionary<int, int>();
+            foreach (KeyValuePair<int, int> entry in inTransitBallCounts)
+            {
+                availableCounts[entry.Key] = entry.Value;
+            }
+            List<List<TrayColumn.RemainingTrayRequirement>> requirementsByColumn =
+                new List<List<TrayColumn.RemainingTrayRequirement>>(trayColumns.Length);
+            int[] nextRequirementIndices = new int[trayColumns.Length];
+
+            for (int columnIndex = 0; columnIndex < trayColumns.Length; columnIndex++)
+            {
+                List<TrayColumn.RemainingTrayRequirement> requirements = new List<TrayColumn.RemainingTrayRequirement>();
+                trayColumns[columnIndex]?.AddRemainingRequirements(requirements);
+                requirementsByColumn.Add(requirements);
+            }
+
+            while (true)
+            {
+                bool hasRemainingRequirement = false;
+                bool advancedAnyColumn = false;
+
+                for (int columnIndex = 0; columnIndex < requirementsByColumn.Count; columnIndex++)
+                {
+                    List<TrayColumn.RemainingTrayRequirement> requirements = requirementsByColumn[columnIndex];
+                    int requirementIndex = nextRequirementIndices[columnIndex];
+                    if (requirementIndex >= requirements.Count) continue;
+
+                    hasRemainingRequirement = true;
+                    TrayColumn.RemainingTrayRequirement requirement = requirements[requirementIndex];
+                    availableCounts.TryGetValue(requirement.ColorId, out int availableCount);
+                    if (availableCount < requirement.Capacity) continue;
+
+                    availableCounts[requirement.ColorId] = availableCount - requirement.Capacity;
+                    nextRequirementIndices[columnIndex]++;
+                    advancedAnyColumn = true;
+                }
+
+                if (!hasRemainingRequirement) break;
+                if (!advancedAnyColumn) return false;
+            }
+
+            foreach (KeyValuePair<int, int> entry in availableCounts)
+            {
+                if (entry.Value != 0) return false;
+            }
+
+            return true;
+        }
+
         public void ClearGeneratedTrays()
         {
             StopCompletionVfx();

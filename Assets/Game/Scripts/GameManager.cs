@@ -1,5 +1,6 @@
 using UnityEngine;
 using TMPro;
+using System.Collections.Generic;
 
 namespace PopSort
 {
@@ -23,6 +24,8 @@ namespace PopSort
         [Tooltip("Resume the last reached level when the game is launched.")]
         [SerializeField] private bool resumeSavedProgress = true;
         [SerializeField] private int levelNumber = 1;
+        [Header("Fast Finish")]
+        [SerializeField, Range(1f, 4f)] private float fastFinishTimeScale = 2f;
         [SerializeField] private GameWin gameWinPanel;
         [SerializeField] private GameLoose gameLoosePanel;
 
@@ -33,12 +36,14 @@ namespace PopSort
 
         private const string SavedLevelIndexKey = "PopSort.SavedLevelIndex";
         private int configuredStartingLevelIndex;
+        private bool isFastFinishActive;
 
         private void Awake()
         {
             // VSync takes priority over Application.targetFrameRate on desktop platforms.
             QualitySettings.vSyncCount = 0;
             Application.targetFrameRate = targetFrameRate;
+            RestoreNormalTimeScale();
             configuredStartingLevelIndex = levelNumber - 1;
         }
 
@@ -50,21 +55,33 @@ namespace PopSort
         private void OnEnable()
         {
             if (beltQueueManager != null) beltQueueManager.OnOverflow += HandleOverflow;
+            if (gridManager != null) gridManager.OnGridCleared += HandleGridCleared;
         }
 
         private void OnDisable()
         {
             if (beltQueueManager != null) beltQueueManager.OnOverflow -= HandleOverflow;
+            if (gridManager != null) gridManager.OnGridCleared -= HandleGridCleared;
+            RestoreNormalTimeScale();
+        }
+
+        private void OnDestroy()
+        {
+            RestoreNormalTimeScale();
         }
 
         private void Update()
         {
             if (State != GameState.Playing) return;
 
+            TryStartFastFinish();
+
             // Win as soon as every tray is filled.
             if (trayManager != null && trayManager.AreAllTraysComplete())
             {
                 State = GameState.Won;
+                RestoreNormalTimeScale();
+                SfxManager.PlayLevelWon();
                 SaveNextLevelProgress();
                 if (tapInputManager != null) tapInputManager.enabled = false;
                 beltQueueManager?.SetBeltMoving(false);
@@ -77,6 +94,8 @@ namespace PopSort
             if (State != GameState.Playing) return;
 
             State = GameState.Lost;
+            RestoreNormalTimeScale();
+            SfxManager.PlayLevelFailed();
             if (tapInputManager != null) tapInputManager.enabled = false;
             beltQueueManager?.SetBeltMoving(false);
             gameLoosePanel?.Show(() => LoadLevel(levelNumber - 1));
@@ -106,6 +125,7 @@ namespace PopSort
 
         private void LoadLevel(int sequenceIndex)
         {
+            RestoreNormalTimeScale();
             if (levelSequence == null || sequenceIndex < 0 || sequenceIndex >= levelSequence.Length)
             {
                 Debug.LogError($"Cannot load level sequence index {sequenceIndex}.", this);
@@ -136,6 +156,42 @@ namespace PopSort
             UpdateLevelNumberLabel();
             SaveProgress(sequenceIndex);
             if (tapInputManager != null) tapInputManager.enabled = true;
+        }
+
+        private void HandleGridCleared()
+        {
+            TryStartFastFinish();
+        }
+
+        private void TryStartFastFinish()
+        {
+            if (isFastFinishActive || State != GameState.Playing || gridManager == null ||
+                !gridManager.AreAllHoldersPopped || trayManager == null || ballPool == null ||
+                beltQueueManager == null || !beltQueueManager.CanContinueAutomaticProcessing)
+            {
+                return;
+            }
+
+            Dictionary<int, int> inTransitBallCounts = new Dictionary<int, int>();
+            foreach (Ball ball in ballPool.ActiveBalls)
+            {
+                if (ball == null || ball.State == BallState.InTray || ball.State == BallState.TrayLanding) continue;
+
+                inTransitBallCounts.TryGetValue(ball.ColorId, out int currentCount);
+                inTransitBallCounts[ball.ColorId] = currentCount + 1;
+            }
+
+            gridManager.AddUnspawnedBallCounts(inTransitBallCounts);
+            if (!trayManager.CanResolveRemainingBalls(inTransitBallCounts)) return;
+
+            isFastFinishActive = true;
+            Time.timeScale = fastFinishTimeScale;
+        }
+
+        private void RestoreNormalTimeScale()
+        {
+            Time.timeScale = 1f;
+            isFastFinishActive = false;
         }
 
         private void UpdateLevelNumberLabel()

@@ -11,6 +11,8 @@ namespace PopSort
         [SerializeField] private AudioClip ballPopSfx;
         [SerializeField] private AudioClip ballLandedInTraySfx;
         [SerializeField] private AudioClip trayFilledSfx;
+        [SerializeField] private AudioClip levelWonSfx;
+        [SerializeField] private AudioClip levelFailedSfx;
 
         private static SfxManager instance;
         private static bool hasLoggedMissingManager;
@@ -37,6 +39,10 @@ namespace PopSort
         public static void PlayBallLandedInTray() => GetInstance()?.Play(manager => manager.ballLandedInTraySfx);
 
         public static void PlayTrayFilled() => GetInstance()?.Play(manager => manager.trayFilledSfx);
+
+        public static void PlayLevelWon() => GetInstance()?.Play(manager => manager.levelWonSfx);
+
+        public static void PlayLevelFailed() => GetInstance()?.Play(manager => manager.levelFailedSfx);
 
         private static SfxManager GetInstance()
         {

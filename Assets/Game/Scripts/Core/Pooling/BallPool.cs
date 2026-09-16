@@ -1,5 +1,6 @@
 using UnityEngine;
 using UnityEngine.Pool;
+using System.Collections.Generic;
 
 namespace PopSort
 {
@@ -8,7 +9,11 @@ namespace PopSort
         [SerializeField] private Ball ballPrefab;
 
         private ObjectPool<Ball> pool;
-        private readonly System.Collections.Generic.HashSet<Ball> activeBalls = new System.Collections.Generic.HashSet<Ball>();
+        private readonly HashSet<Ball> activeBalls = new HashSet<Ball>();
+
+        // Read-only view used by completion checks. Callers must not modify the pool
+        // while enumerating this collection.
+        public IEnumerable<Ball> ActiveBalls => activeBalls;
 
         private void Awake()
         {
@@ -41,7 +46,7 @@ namespace PopSort
         // Catches balls in transient states no single subsystem tracks (e.g. airborne between a grid pop and belt landing).
         public void ReleaseAll()
         {
-            foreach (Ball ball in new System.Collections.Generic.List<Ball>(activeBalls))
+            foreach (Ball ball in new List<Ball>(activeBalls))
             {
                 Release(ball);
             }

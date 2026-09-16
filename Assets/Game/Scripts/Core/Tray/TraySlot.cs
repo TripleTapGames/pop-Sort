@@ -70,6 +70,7 @@ namespace PopSort
         public int ColorId => colorId;
         public bool HasSpace => placedBalls.Count < capacity;
         public bool IsComplete => hasReachedCapacity;
+        public int RemainingCapacity => Mathf.Max(0, capacity - placedBalls.Count);
         public float LastIntakeMoveTime { get; private set; }
 
         private readonly List<Ball> placedBalls = new List<Ball>();

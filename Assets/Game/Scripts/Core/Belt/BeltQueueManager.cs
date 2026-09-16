@@ -27,6 +27,10 @@ namespace PopSort
 
         public int QueueCount => queue.Count + pendingBalls.Count + funnelWaitingBalls.Count;
 
+        // Mirrors the existing overflow rule without changing its timer or state.
+        public bool CanContinueAutomaticProcessing =>
+            queue.Count < GetBeltCapacity() || HasQueuedBallMatchingActiveTray();
+
         public void SetLevelData(LevelData newLevelData)
         {
             levelData = newLevelData;
