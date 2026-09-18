@@ -32,6 +32,7 @@ namespace PopSort
 
         public event Action OnGridCleared;
         public bool AreAllHoldersPopped { get; private set; }
+        public bool HasUnspawnedBalls => unspawnedBallCounts.Count > 0;
 
         private readonly List<Ball> aliveBalls = new List<Ball>();
         private readonly List<BallGroup> groups = new List<BallGroup>();

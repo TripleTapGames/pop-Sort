@@ -92,12 +92,14 @@ namespace PopSort
 
         public void Hide()
         {
+            if (this == null) return;
+
             target = null;
             isConveyorWarningVisible = false;
             if (conveyorMask != null) conveyorMask.gameObject.SetActive(false);
             if (warningBubbleRect != null) warningBubbleRect.gameObject.SetActive(false);
             if (warningInputBlockerRect != null) warningInputBlockerRect.gameObject.SetActive(false);
-            if (gameObject != null) gameObject.SetActive(false);
+            gameObject.SetActive(false);
         }
 
         private void Update()

@@ -3031,7 +3031,7 @@ MonoBehaviour:
     m_PostInfinity: 2
     m_RotationOrder: 4
   funnelExitTolerance: 0.2
-  funnelCaptureRadius: 0.3
+  funnelCaptureRadius: 1.2
 --- !u!4 &1342828774
 Transform:
   m_ObjectHideFlags: 0

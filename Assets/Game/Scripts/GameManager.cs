@@ -134,7 +134,7 @@ namespace PopSort
             dismissWarningAtEndOfFrame = false;
             PlayerPrefs.SetInt(Level2ConveyorFtueSeenKey, 1);
             PlayerPrefs.Save();
-            level2FtueOverlay?.Hide();
+            if (level2FtueOverlay != null) level2FtueOverlay.Hide();
             activeFtueStep = FtueStep.None;
             tutorialBallsExpected = 0;
             tutorialBallsSeated = 0;
@@ -250,7 +250,7 @@ namespace PopSort
         {
             gridManager?.HideFirstTapFtue();
             gridManager?.SetHolderTapsBlocked(true);
-            level2FtueOverlay?.Hide();
+            if (level2FtueOverlay != null) level2FtueOverlay.Hide();
             activeFtueStep = FtueStep.Level2WaitingForConveyor;
         }
 
@@ -367,17 +367,20 @@ namespace PopSort
             if (activeFtueStep == FtueStep.Level2Warning)
             {
                 RestoreNormalTimeScale();
-                if (State == GameState.Playing) beltQueueManager?.SetBeltMoving(true);
+                if (State == GameState.Playing && beltQueueManager != null) beltQueueManager.SetBeltMoving(true);
             }
 
             activeFtueStep = FtueStep.None;
             tutorialBallsExpected = 0;
             tutorialBallsSeated = 0;
             dismissWarningAtEndOfFrame = false;
-            gridManager?.HideFirstTapFtue();
-            gridManager?.SetHolderTapsBlocked(false);
-            level1FtueOverlay?.Hide();
-            level2FtueOverlay?.Hide();
+            if (gridManager != null)
+            {
+                gridManager.HideFirstTapFtue();
+                gridManager.SetHolderTapsBlocked(false);
+            }
+            if (level1FtueOverlay != null) level1FtueOverlay.Hide();
+            if (level2FtueOverlay != null) level2FtueOverlay.Hide();
         }
 
         private void HandleGridCleared()
@@ -388,8 +391,9 @@ namespace PopSort
         private void TryStartFastFinish()
         {
             if (isFastFinishActive || State != GameState.Playing || gridManager == null ||
-                !gridManager.AreAllHoldersPopped || trayManager == null || ballPool == null ||
-                beltQueueManager == null || !beltQueueManager.CanContinueAutomaticProcessing)
+                !gridManager.AreAllHoldersPopped || gridManager.HasUnspawnedBalls ||
+                trayManager == null || ballPool == null || beltQueueManager == null ||
+                !beltQueueManager.AreAllQueuedBallsSeated || !beltQueueManager.HasCollectableQueuedBall)
             {
                 return;
             }
@@ -397,13 +401,14 @@ namespace PopSort
             Dictionary<int, int> inTransitBallCounts = new Dictionary<int, int>();
             foreach (Ball ball in ballPool.ActiveBalls)
             {
-                if (ball == null || ball.State == BallState.InTray || ball.State == BallState.TrayLanding) continue;
+                if (ball == null) continue;
+                if (ball.State == BallState.InTray || ball.State == BallState.TrayLanding) continue;
+                if (ball.State != BallState.Queued) return;
 
                 inTransitBallCounts.TryGetValue(ball.ColorId, out int currentCount);
                 inTransitBallCounts[ball.ColorId] = currentCount + 1;
             }
 
-            gridManager.AddUnspawnedBallCounts(inTransitBallCounts);
             if (!trayManager.CanResolveRemainingBalls(inTransitBallCounts)) return;
 
             isFastFinishActive = true;

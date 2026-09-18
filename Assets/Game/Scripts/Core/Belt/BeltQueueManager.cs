@@ -29,6 +29,20 @@ namespace PopSort
         public int QueueCount => queue.Count + pendingBalls.Count + funnelWaitingBalls.Count;
         public int BeltItemCount => queue.Count;
         public Transform FunnelExitPoint => funnelExitPoint;
+        public bool HasCollectableQueuedBall => HasQueuedBallMatchingActiveTray();
+        public bool AreAllQueuedBallsSeated
+        {
+            get
+            {
+                if (pendingBalls.Count > 0 || funnelWaitingBalls.Count > 0) return false;
+                foreach (QueuedBall queuedBall in queue)
+                {
+                    if (queuedBall.Ball == null || !queuedBall.IsSeated) return false;
+                }
+
+                return true;
+            }
+        }
 
         // Mirrors the existing overflow rule without changing its timer or state.
         public bool CanContinueAutomaticProcessing =>
@@ -87,7 +101,6 @@ namespace PopSort
         private readonly List<Ball> pendingBalls = new List<Ball>();
         private readonly List<Ball> funnelWaitingBalls = new List<Ball>();
         private readonly HashSet<int> occupiedSplineSlots = new HashSet<int>();
-        private readonly Collider2D[] funnelCaptureResults = new Collider2D[32];
         private float noMatchElapsedTime;
         private bool isProcessingQueue;
 
@@ -135,22 +148,16 @@ namespace PopSort
         // dynamic until one is selected for extraction.
         private void CaptureFallingBallsNearFunnelExit()
         {
-            if (funnelExitPoint == null) return;
+            if (funnelExitPoint == null || ballPool == null) return;
 
-            int resultCount = Physics2D.OverlapCircleNonAlloc(
-                funnelExitPoint.position,
-                funnelCaptureRadius,
-                funnelCaptureResults);
-
-            for (int i = 0; i < resultCount; i++)
+            Vector2 exitPosition = funnelExitPoint.position;
+            float captureRadiusSquared = funnelCaptureRadius * funnelCaptureRadius;
+            foreach (Ball ball in ballPool.ActiveBalls)
             {
-                Collider2D capturedCollider = funnelCaptureResults[i];
-                funnelCaptureResults[i] = null;
-
-                Ball ball = capturedCollider != null ? capturedCollider.GetComponent<Ball>() : null;
                 if (ball == null || ball.State != BallState.Falling) continue;
 
-                HandleBallLanded(ball);
+                Vector2 offset = (Vector2)ball.transform.position - exitPosition;
+                if (offset.sqrMagnitude <= captureRadiusSquared) HandleBallLanded(ball);
             }
         }
 
