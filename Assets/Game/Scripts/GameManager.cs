@@ -1,6 +1,7 @@
 using UnityEngine;
 using TMPro;
 using System.Collections.Generic;
+using TripleTapSDK;
 
 namespace PopSort
 {
@@ -118,6 +119,8 @@ namespace PopSort
                 RestoreNormalTimeScale();
                 SfxManager.PlayLevelWon();
                 SaveNextLevelProgress();
+                TTManager.Instance?.GAService?.LogProgressionComplete($"level_{levelNumber}");
+                TTManager.Instance?.TTAnalyticsService?.LogMilestoneLevelCompleted(levelNumber);
                 if (tapInputManager != null) tapInputManager.enabled = false;
                 beltQueueManager?.SetBeltMoving(false);
                 gameWinPanel?.Show(LoadNextLevel);
@@ -148,6 +151,7 @@ namespace PopSort
             EndFtue();
             RestoreNormalTimeScale();
             SfxManager.PlayLevelFailed();
+            TTManager.Instance?.GAService?.LogProgressionFail($"level_{levelNumber}");
             if (tapInputManager != null) tapInputManager.enabled = false;
             beltQueueManager?.SetBeltMoving(false);
             gameLoosePanel?.Show(() => LoadLevel(levelNumber - 1));
@@ -208,6 +212,7 @@ namespace PopSort
             levelNumber = sequenceIndex + 1;
             UpdateLevelNumberLabel();
             SaveProgress(sequenceIndex);
+            TTManager.Instance?.GAService?.LogProgressionStart($"level_{levelNumber}");
             if (tapInputManager != null) tapInputManager.enabled = true;
             ShowFtueIfNeeded();
         }
