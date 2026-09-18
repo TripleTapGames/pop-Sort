@@ -26,8 +26,9 @@ namespace PopSort
         [SerializeField] private int levelNumber = 1;
         [Header("Fast Finish")]
         [SerializeField, Range(1f, 4f)] private float fastFinishTimeScale = 2f;
-        [Header("First Tap FTUE")]
-        [SerializeField] private GameObject ftuePanel;
+        [Header("FTUE Panels")]
+        [SerializeField] private GameObject ftueLevel1Panel;
+        [SerializeField] private GameObject ftueLevel2Panel;
         [SerializeField] private GameWin gameWinPanel;
         [SerializeField] private GameLoose gameLoosePanel;
 
@@ -38,9 +39,20 @@ namespace PopSort
 
         private const string SavedLevelIndexKey = "PopSort.SavedLevelIndex";
         private const string FirstPopFtueSeenKey = "PopSort.FirstPopFtueSeen";
+        private const string LegacyLevel2FtueSeenKey = "PopSort.Level2FtueSeen";
+        private const string Level2ConveyorFtueSeenKey = "PopSort.Level2ConveyorFtueSeen";
+        private const int Level2GreenColorId = 2;
+        private const int Level2YellowColorId = 3;
+        private enum FtueStep { None, Level1Tap, Level2Green, Level2Yellow, Level2WaitingForConveyor, Level2Warning }
+
         private int configuredStartingLevelIndex;
         private bool isFastFinishActive;
-        private FirstTapFtueOverlay firstTapFtueOverlay;
+        private FirstTapFtueOverlay level1FtueOverlay;
+        private FirstTapFtueOverlay level2FtueOverlay;
+        private FtueStep activeFtueStep;
+        private int tutorialBallsExpected;
+        private int tutorialBallsSeated;
+        private bool dismissWarningAtEndOfFrame;
 
         private void Awake()
         {
@@ -59,17 +71,19 @@ namespace PopSort
         private void OnEnable()
         {
             if (beltQueueManager != null) beltQueueManager.OnOverflow += HandleOverflow;
+            if (beltQueueManager != null) beltQueueManager.OnBallSeated += HandleTutorialBallSeated;
             if (gridManager != null) gridManager.OnGridCleared += HandleGridCleared;
-            if (tapInputManager != null) tapInputManager.OnPopTapped += HandleFirstPopTapped;
-            CreateFirstTapFtueOverlay();
+            if (tapInputManager != null) tapInputManager.OnPopTapped += HandleFtueTap;
+            CreateFtueOverlays();
         }
 
         private void OnDisable()
         {
             if (beltQueueManager != null) beltQueueManager.OnOverflow -= HandleOverflow;
+            if (beltQueueManager != null) beltQueueManager.OnBallSeated -= HandleTutorialBallSeated;
             if (gridManager != null) gridManager.OnGridCleared -= HandleGridCleared;
-            if (tapInputManager != null) tapInputManager.OnPopTapped -= HandleFirstPopTapped;
-            firstTapFtueOverlay?.Hide();
+            if (tapInputManager != null) tapInputManager.OnPopTapped -= HandleFtueTap;
+            EndFtue();
             RestoreNormalTimeScale();
         }
 
@@ -82,12 +96,25 @@ namespace PopSort
         {
             if (State != GameState.Playing) return;
 
+            if (activeFtueStep == FtueStep.Level2Warning)
+            {
+                if (WasTapStartedThisFrame()) DismissConveyorWarning();
+                return;
+            }
+
+            if (activeFtueStep == FtueStep.Level2WaitingForConveyor)
+            {
+                if (tutorialBallsSeated >= tutorialBallsExpected) ShowConveyorWarning();
+                return;
+            }
+
             TryStartFastFinish();
 
             // Win as soon as every tray is filled.
             if (trayManager != null && trayManager.AreAllTraysComplete())
             {
                 State = GameState.Won;
+                EndFtue();
                 RestoreNormalTimeScale();
                 SfxManager.PlayLevelWon();
                 SaveNextLevelProgress();
@@ -97,11 +124,28 @@ namespace PopSort
             }
         }
 
+        private void LateUpdate()
+        {
+            if (!dismissWarningAtEndOfFrame) return;
+
+            dismissWarningAtEndOfFrame = false;
+            PlayerPrefs.SetInt(Level2ConveyorFtueSeenKey, 1);
+            PlayerPrefs.Save();
+            level2FtueOverlay?.Hide();
+            activeFtueStep = FtueStep.None;
+            tutorialBallsExpected = 0;
+            tutorialBallsSeated = 0;
+            RestoreNormalTimeScale();
+            beltQueueManager?.SetBeltMoving(true);
+            gridManager?.SetHolderTapsBlocked(false);
+        }
+
         private void HandleOverflow()
         {
             if (State != GameState.Playing) return;
 
             State = GameState.Lost;
+            EndFtue();
             RestoreNormalTimeScale();
             SfxManager.PlayLevelFailed();
             if (tapInputManager != null) tapInputManager.enabled = false;
@@ -147,6 +191,7 @@ namespace PopSort
                 return;
             }
 
+            EndFtue();
             State = GameState.Playing;
             CurrentLevel = nextLevel;
             gameWinPanel?.Hide();
@@ -164,43 +209,170 @@ namespace PopSort
             UpdateLevelNumberLabel();
             SaveProgress(sequenceIndex);
             if (tapInputManager != null) tapInputManager.enabled = true;
-            ShowFirstTapFtueIfNeeded();
+            ShowFtueIfNeeded();
         }
 
-        private void HandleFirstPopTapped()
+        private void HandleFtueTap()
         {
-            if (PlayerPrefs.HasKey(FirstPopFtueSeenKey)) return;
-
-            PlayerPrefs.SetInt(FirstPopFtueSeenKey, 1);
-            PlayerPrefs.Save();
-            gridManager?.HideFirstTapFtue();
-            firstTapFtueOverlay?.Hide();
-        }
-
-        private void CreateFirstTapFtueOverlay()
-        {
-            if (firstTapFtueOverlay == null)
+            switch (activeFtueStep)
             {
-                if (ftuePanel == null)
+                case FtueStep.Level1Tap:
+                    PlayerPrefs.SetInt(FirstPopFtueSeenKey, 1);
+                    PlayerPrefs.Save();
+                    EndFtue();
+                    break;
+                case FtueStep.Level2Green:
+                    BeginFtueStep(FtueStep.Level2Yellow);
+                    break;
+                case FtueStep.Level2Yellow:
+                    WaitForConveyorWarning();
+                    break;
+            }
+        }
+
+        private void HandleTutorialBallSeated(Ball ball)
+        {
+            if (ball == null || (ball.ColorId != Level2GreenColorId && ball.ColorId != Level2YellowColorId)) return;
+
+            if (activeFtueStep == FtueStep.Level2Green || activeFtueStep == FtueStep.Level2Yellow ||
+                activeFtueStep == FtueStep.Level2WaitingForConveyor)
+            {
+                tutorialBallsSeated++;
+            }
+        }
+
+        private void WaitForConveyorWarning()
+        {
+            gridManager?.HideFirstTapFtue();
+            gridManager?.SetHolderTapsBlocked(true);
+            level2FtueOverlay?.Hide();
+            activeFtueStep = FtueStep.Level2WaitingForConveyor;
+        }
+
+        private void ShowConveyorWarning()
+        {
+            Camera camera = tapInputManager != null ? tapInputManager.MainCamera : null;
+            Transform funnelExitPoint = beltQueueManager != null ? beltQueueManager.FunnelExitPoint : null;
+            if (level2FtueOverlay == null || !level2FtueOverlay.ShowConveyorWarning(camera, funnelExitPoint))
+            {
+                Debug.LogError("Cannot show the level 2 conveyor FTUE warning.", this);
+                EndFtue();
+                return;
+            }
+
+            activeFtueStep = FtueStep.Level2Warning;
+            beltQueueManager?.SetBeltMoving(false);
+            Time.timeScale = 0f;
+        }
+
+        private void DismissConveyorWarning()
+        {
+            dismissWarningAtEndOfFrame = true;
+        }
+
+        private static bool WasTapStartedThisFrame()
+        {
+            if (Input.touchCount > 0 && Input.GetTouch(0).phase == TouchPhase.Began) return true;
+            return Input.GetMouseButtonDown(0);
+        }
+
+        private void CreateFtueOverlays()
+        {
+            level1FtueOverlay = GetFtueOverlay(ftueLevel1Panel, "FtueLevel1Panel");
+            level2FtueOverlay = GetFtueOverlay(ftueLevel2Panel, "FtueLevel2Panel");
+        }
+
+        private FirstTapFtueOverlay GetFtueOverlay(GameObject panel, string panelName)
+        {
+            if (panel == null)
+            {
+                Debug.LogError($"GameManager requires the {panelName} scene object.", this);
+                return null;
+            }
+
+            FirstTapFtueOverlay overlay = panel.GetComponent<FirstTapFtueOverlay>();
+            if (overlay == null) overlay = panel.AddComponent<FirstTapFtueOverlay>();
+            overlay.Hide();
+            return overlay;
+        }
+
+        private void ShowFtueIfNeeded()
+        {
+            if (levelNumber == 1 && !PlayerPrefs.HasKey(FirstPopFtueSeenKey))
+            {
+                BeginFtueStep(FtueStep.Level1Tap);
+            }
+            else if (levelNumber == 2 && !PlayerPrefs.HasKey(Level2ConveyorFtueSeenKey))
+            {
+                if (CurrentLevel == null || CurrentLevel.Width < 2 || CurrentLevel.Height < 1)
                 {
-                    Debug.LogError("GameManager requires the FtuePanel scene object.", this);
+                    Debug.LogError("Level 2 FTUE requires a grid with a bottom-left and bottom-right holder.", this);
+                    EndFtue();
                     return;
                 }
 
-                firstTapFtueOverlay = ftuePanel.GetComponent<FirstTapFtueOverlay>();
-                if (firstTapFtueOverlay == null) firstTapFtueOverlay = ftuePanel.AddComponent<FirstTapFtueOverlay>();
+                int bottomRow = CurrentLevel.Height - 1;
+                tutorialBallsExpected = Mathf.Max(1, CurrentLevel.GetCell(0, bottomRow).ballCount) +
+                    Mathf.Max(1, CurrentLevel.GetCell(CurrentLevel.Width - 1, bottomRow).ballCount);
+                tutorialBallsSeated = 0;
+                BeginFtueStep(FtueStep.Level2Green);
             }
-
-            firstTapFtueOverlay.gameObject.SetActive(false);
         }
 
-        private void ShowFirstTapFtueIfNeeded()
+        private void BeginFtueStep(FtueStep step)
         {
-            if (PlayerPrefs.HasKey(FirstPopFtueSeenKey)) return;
+            Transform target = null;
+            string instruction = null;
+            Camera camera = tapInputManager != null ? tapInputManager.MainCamera : null;
+            FirstTapFtueOverlay overlay = step == FtueStep.Level1Tap ? level1FtueOverlay : level2FtueOverlay;
 
-            gridManager?.ShowFirstTappablePopFtue();
-            Transform target = gridManager?.GetFirstTappablePopHolderTransform();
-            firstTapFtueOverlay?.Show(tapInputManager != null ? tapInputManager.MainCamera : null, target);
+            if (gridManager != null && CurrentLevel != null)
+            {
+                switch (step)
+                {
+                    case FtueStep.Level1Tap:
+                        target = gridManager.GetFirstTappablePopHolderTransform();
+                        instruction = "Tap a ball to pop it!";
+                        break;
+                    case FtueStep.Level2Green:
+                        target = gridManager.GetTappablePopHolderTransformAt(0, CurrentLevel.Height - 1, Level2GreenColorId);
+                        instruction = "Tap the green ball!";
+                        break;
+                    case FtueStep.Level2Yellow:
+                        target = gridManager.GetTappablePopHolderTransformAt(
+                            CurrentLevel.Width - 1, CurrentLevel.Height - 1, Level2YellowColorId);
+                        instruction = "Tap the yellow ball!";
+                        break;
+                }
+            }
+
+            if (target == null || camera == null || overlay == null ||
+                !gridManager.SetFtueTarget(target) || !overlay.Show(camera, target, instruction))
+            {
+                Debug.LogError($"Cannot start FTUE step {step}: its target, camera, or panel is unavailable.", this);
+                EndFtue();
+                return;
+            }
+
+            activeFtueStep = step;
+        }
+
+        private void EndFtue()
+        {
+            if (activeFtueStep == FtueStep.Level2Warning)
+            {
+                RestoreNormalTimeScale();
+                if (State == GameState.Playing) beltQueueManager?.SetBeltMoving(true);
+            }
+
+            activeFtueStep = FtueStep.None;
+            tutorialBallsExpected = 0;
+            tutorialBallsSeated = 0;
+            dismissWarningAtEndOfFrame = false;
+            gridManager?.HideFirstTapFtue();
+            gridManager?.SetHolderTapsBlocked(false);
+            level1FtueOverlay?.Hide();
+            level2FtueOverlay?.Hide();
         }
 
         private void HandleGridCleared()
@@ -252,6 +424,8 @@ namespace PopSort
         {
             PlayerPrefs.DeleteKey(SavedLevelIndexKey);
             PlayerPrefs.DeleteKey(FirstPopFtueSeenKey);
+            PlayerPrefs.DeleteKey(LegacyLevel2FtueSeenKey);
+            PlayerPrefs.DeleteKey(Level2ConveyorFtueSeenKey);
             PlayerPrefs.Save();
             LoadLevel(GetConfiguredStartingLevelIndex());
         }

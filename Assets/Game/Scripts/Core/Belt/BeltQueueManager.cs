@@ -24,8 +24,10 @@ namespace PopSort
         [SerializeField] private float funnelCaptureRadius = 1.2f;
 
         public event Action OnOverflow;
+        public event Action<Ball> OnBallSeated;
 
         public int QueueCount => queue.Count + pendingBalls.Count + funnelWaitingBalls.Count;
+        public Transform FunnelExitPoint => funnelExitPoint;
 
         // Mirrors the existing overflow rule without changing its timer or state.
         public bool CanContinueAutomaticProcessing =>
@@ -327,6 +329,8 @@ namespace PopSort
                     {
                         continue;
                     }
+
+                    if (queuedBall.Ball != null) OnBallSeated?.Invoke(queuedBall.Ball);
                 }
 
                 if (!TryCollectBallAtColumnPickup(queuedBall))

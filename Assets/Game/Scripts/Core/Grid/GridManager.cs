@@ -39,6 +39,8 @@ namespace PopSort
         private readonly List<ParticleSystem> popRipples = new List<ParticleSystem>();
         private readonly Dictionary<int, int> unspawnedBallCounts = new Dictionary<int, int>();
         private BallHolder ftueHolder;
+        private BallGroup ftueTargetGroup;
+        private bool holderTapsBlocked;
         private bool hasLoggedMissingBallHolderPrefab;
 
         private void Start()
@@ -78,6 +80,8 @@ namespace PopSort
 
         public bool TryPopHolderAtWorldPosition(Vector2 worldPosition)
         {
+            if (holderTapsBlocked) return false;
+
             BallGroup closestGroup = null;
             float closestSqrDistance = float.PositiveInfinity;
             float tapRadius = cellSize * 0.5f;
@@ -93,7 +97,7 @@ namespace PopSort
                 closestSqrDistance = sqrDistance;
             }
 
-            if (closestGroup == null) return false;
+            if (closestGroup == null || (ftueTargetGroup != null && closestGroup != ftueTargetGroup)) return false;
 
             closestGroup.TryPopFromHolder();
             return true;
@@ -114,6 +118,7 @@ namespace PopSort
             unspawnedBallCounts.Clear();
             AreAllHoldersPopped = false;
             HideFirstTapFtue();
+            holderTapsBlocked = false;
 
             foreach (Transform holder in holders)
             {
@@ -386,10 +391,48 @@ namespace PopSort
             return null;
         }
 
+        public Transform GetTappablePopHolderTransformAt(int x, int y, int colorId)
+        {
+            foreach (BallGroup group in groups)
+            {
+                if (group == null || group.X != x || group.Y != y || group.ColorId != colorId ||
+                    group.IsPopping || HasBallBelowLogical(group)) continue;
+
+                return group.HolderDisplay != null ? group.HolderDisplay.transform : null;
+            }
+
+            return null;
+        }
+
+        public bool SetFtueTarget(Transform target)
+        {
+            HideFirstTapFtue();
+            if (target == null) return false;
+
+            foreach (BallGroup group in groups)
+            {
+                if (group == null || group.IsPopping || HasBallBelowLogical(group) ||
+                    group.HolderDisplay == null || group.HolderDisplay.transform != target) continue;
+
+                ftueTargetGroup = group;
+                ftueHolder = group.HolderDisplay;
+                ftueHolder.SetFirstTapFtueVisible(true);
+                return true;
+            }
+
+            return false;
+        }
+
         public void HideFirstTapFtue()
         {
             ftueHolder?.SetFirstTapFtueVisible(false);
             ftueHolder = null;
+            ftueTargetGroup = null;
+        }
+
+        public void SetHolderTapsBlocked(bool blocked)
+        {
+            holderTapsBlocked = blocked;
         }
 
         private void TrackUnspawnedBalls(int colorId, int count)
@@ -448,6 +491,7 @@ namespace PopSort
 
             public int X { get; }
             public int Y { get; }
+            public int ColorId => colorId;
             public bool IsPopping => popping;
             public Vector3 Position => holder != null ? holder.position : Vector3.zero;
             public BallHolder HolderDisplay => holderDisplay;
