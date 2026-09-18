@@ -59,6 +59,8 @@ namespace PopSort
     public class LevelData : ScriptableObject
     {
         public const int DefaultTrayColumnCount = 4;
+        public const int MinStackSize = 1;
+        public const int MaxStackSize = 12;
 
         public LevelDifficulty difficulty;
         public GridRow[] rows;
@@ -76,6 +78,8 @@ namespace PopSort
         [Range(1, 3)] public int maxTrayColumnCount = 3;
         public TrayColumnData[] trayColumns;
         public DifficultyParameters difficultyParameters = new DifficultyParameters();
+        // A null value preserves the legacy difficulty-based generation range for existing assets.
+        public bool[] allowedStackSizes;
 
         public int Height => rows?.Length ?? 0;
         public int Width => Height > 0 ? rows[0].cells.Length : 0;

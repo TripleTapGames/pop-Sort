@@ -62,6 +62,13 @@ namespace PopSort.EditorTools
                 messages.Add(new LevelValidationMessage(LevelValidationSeverity.Error, "Belt slot count must be greater than 0."));
             }
 
+            if (levelData.allowedStackSizes != null && !HasAllowedStackSize(levelData))
+            {
+                messages.Add(new LevelValidationMessage(
+                    LevelValidationSeverity.Warning,
+                    "Allowed Stack Sizes has no selected sizes. Level generation is disabled until at least one size is selected."));
+            }
+
             int enabledCells = 0;
             int[] ballCounts = levelData.CountBallsByColor();
             for (int y = 0; y < levelData.Height; y++)
@@ -138,6 +145,17 @@ namespace PopSort.EditorTools
             messages.Add(new LevelValidationMessage(LevelValidationSeverity.Info, $"Tray preview uses {previewColumns} columns, filled row-first left to right."));
 
             return messages;
+        }
+
+        private static bool HasAllowedStackSize(LevelData levelData)
+        {
+            for (int size = LevelData.MinStackSize; size <= LevelData.MaxStackSize; size++)
+            {
+                int index = size - LevelData.MinStackSize;
+                if (index < levelData.allowedStackSizes.Length && levelData.allowedStackSizes[index]) return true;
+            }
+
+            return false;
         }
     }
 }

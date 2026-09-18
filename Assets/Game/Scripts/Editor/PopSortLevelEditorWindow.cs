@@ -88,6 +88,8 @@ namespace PopSort.EditorTools
             levelData.maxTrayColumnCount = Mathf.Clamp(
                 EditorGUILayout.IntField("Max Tray Columns", levelData.maxTrayColumnCount), 1, 3);
 
+            DrawAllowedStackSizesSection();
+
             if (difficultyChanged)
             {
                 Undo.RecordObject(levelData, "Change Level Difficulty");
@@ -102,6 +104,60 @@ namespace PopSort.EditorTools
 
             EnsurePaletteSize();
             EditorUtility.SetDirty(levelData);
+        }
+
+        private void DrawAllowedStackSizesSection()
+        {
+            EditorGUILayout.LabelField("Allowed Stack Sizes", EditorStyles.boldLabel);
+
+            if (levelData.allowedStackSizes == null)
+            {
+                EditorGUILayout.LabelField(
+                    $"Using difficulty default: 1-{GetMaxBallCount(levelData.difficulty)}. Change a toggle to customize.",
+                    EditorStyles.miniLabel);
+            }
+
+            using (new EditorGUILayout.HorizontalScope())
+            {
+                for (int size = LevelData.MinStackSize; size <= LevelData.MaxStackSize; size++)
+                {
+                    bool isAllowed = IsStackSizeAllowedForEditor(size);
+                    bool newIsAllowed = GUILayout.Toggle(isAllowed, size.ToString(), GUILayout.Width(34f));
+                    if (newIsAllowed == isAllowed) continue;
+
+                    Undo.RecordObject(levelData, "Edit Allowed Stack Sizes");
+                    EnsureAllowedStackSizeSelection();
+                    levelData.allowedStackSizes[size - LevelData.MinStackSize] = newIsAllowed;
+                    EditorUtility.SetDirty(levelData);
+                }
+            }
+
+            using (new EditorGUILayout.HorizontalScope())
+            {
+                if (GUILayout.Button("Select All"))
+                {
+                    SetAllAllowedStackSizes(true);
+                }
+
+                if (GUILayout.Button("Clear"))
+                {
+                    SetAllAllowedStackSizes(false);
+                }
+
+                if (GUILayout.Button("Use Difficulty Default"))
+                {
+                    Undo.RecordObject(levelData, "Use Difficulty Stack Size Default");
+                    levelData.allowedStackSizes = null;
+                    EditorUtility.SetDirty(levelData);
+                }
+            }
+
+            if (levelData.allowedStackSizes != null && GetConfiguredAllowedStackSizes().Count == 0)
+            {
+                EditorGUILayout.HelpBox(
+                    "Select at least one Allowed Stack Size before generating a level.",
+                    MessageType.Warning);
+            }
         }
 
         private void DrawPaletteSection()
@@ -449,6 +505,15 @@ namespace PopSort.EditorTools
 
         private void GenerateLevel()
         {
+            if (GetAllowedStackSizesForGeneration().Count == 0)
+            {
+                EditorUtility.DisplayDialog(
+                    "No Allowed Stack Sizes",
+                    "Select at least one Allowed Stack Size before generating a level.",
+                    "OK");
+                return;
+            }
+
             Undo.RecordObject(levelData, "Generate Level");
             levelData.difficultyParameters = GetDifficultyParameters(levelData.difficulty);
             GenerateRandomLevel();
@@ -513,11 +578,11 @@ namespace PopSort.EditorTools
             List<int> ballColors = new List<int>();
             List<int> ballCounts = new List<int>();
             int groupCount = usableCellCount / trayCapacity;
-            int maxBallCount = GetMaxBallCount(levelData.difficulty);
+            List<int> allowedStackSizes = GetAllowedStackSizesForGeneration();
             for (int groupIndex = 0; groupIndex < groupCount; groupIndex++)
             {
                 int colorId = Random.Range(0, colorCount);
-                int groupBallCount = Random.Range(1, maxBallCount + 1);
+                int groupBallCount = allowedStackSizes[Random.Range(0, allowedStackSizes.Count)];
                 for (int slotIndex = 0; slotIndex < trayCapacity; slotIndex++)
                 {
                     ballColors.Add(colorId);
@@ -571,6 +636,87 @@ namespace PopSort.EditorTools
                 case LevelDifficulty.SuperHard: return 6;
                 default: return 3;
             }
+        }
+
+        private bool IsStackSizeAllowedForEditor(int size)
+        {
+            if (levelData.allowedStackSizes == null)
+            {
+                return size <= GetMaxBallCount(levelData.difficulty);
+            }
+
+            int index = size - LevelData.MinStackSize;
+            return index >= 0 && index < levelData.allowedStackSizes.Length && levelData.allowedStackSizes[index];
+        }
+
+        private void EnsureAllowedStackSizeSelection()
+        {
+            if (levelData.allowedStackSizes != null && levelData.allowedStackSizes.Length == LevelData.MaxStackSize)
+            {
+                return;
+            }
+
+            bool[] selection = new bool[LevelData.MaxStackSize];
+            if (levelData.allowedStackSizes == null)
+            {
+                int defaultMax = GetMaxBallCount(levelData.difficulty);
+                for (int size = LevelData.MinStackSize; size <= defaultMax; size++)
+                {
+                    selection[size - LevelData.MinStackSize] = true;
+                }
+            }
+            else
+            {
+                for (int i = 0; i < selection.Length && i < levelData.allowedStackSizes.Length; i++)
+                {
+                    selection[i] = levelData.allowedStackSizes[i];
+                }
+            }
+
+            levelData.allowedStackSizes = selection;
+        }
+
+        private void SetAllAllowedStackSizes(bool isAllowed)
+        {
+            Undo.RecordObject(levelData, isAllowed ? "Select All Allowed Stack Sizes" : "Clear Allowed Stack Sizes");
+            EnsureAllowedStackSizeSelection();
+            for (int i = 0; i < levelData.allowedStackSizes.Length; i++)
+            {
+                levelData.allowedStackSizes[i] = isAllowed;
+            }
+
+            EditorUtility.SetDirty(levelData);
+        }
+
+        private List<int> GetAllowedStackSizesForGeneration()
+        {
+            if (levelData.allowedStackSizes == null)
+            {
+                List<int> difficultyDefaults = new List<int>();
+                for (int size = LevelData.MinStackSize; size <= GetMaxBallCount(levelData.difficulty); size++)
+                {
+                    difficultyDefaults.Add(size);
+                }
+
+                return difficultyDefaults;
+            }
+
+            return GetConfiguredAllowedStackSizes();
+        }
+
+        private List<int> GetConfiguredAllowedStackSizes()
+        {
+            List<int> allowedSizes = new List<int>();
+            for (int size = LevelData.MinStackSize; size <= LevelData.MaxStackSize; size++)
+            {
+                int index = size - LevelData.MinStackSize;
+                if (index < levelData.allowedStackSizes.Length && levelData.allowedStackSizes[index])
+                {
+                    allowedSizes.Add(size);
+                }
+            }
+
+            return allowedSizes;
         }
 
         private void ResizeGrid(int width, int height)

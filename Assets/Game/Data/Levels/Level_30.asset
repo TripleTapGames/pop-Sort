@@ -1,0 +1,318 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: d3eaf2cdb927342128e9bac4c7e4b40e, type: 3}
+  m_Name: Level_30
+  m_EditorClassIdentifier: 
+  difficulty: 1
+  rows:
+  - cells:
+    - enabled: 1
+      colorId: 4
+      ballCount: 5
+    - enabled: 1
+      colorId: 4
+      ballCount: 6
+    - enabled: 1
+      colorId: 3
+      ballCount: 6
+    - enabled: 1
+      colorId: 3
+      ballCount: 6
+    - enabled: 1
+      colorId: 2
+      ballCount: 7
+    - enabled: 1
+      colorId: 4
+      ballCount: 7
+    - enabled: 1
+      colorId: 0
+      ballCount: 5
+  - cells:
+    - enabled: 1
+      colorId: 0
+      ballCount: 4
+    - enabled: 1
+      colorId: 1
+      ballCount: 8
+    - enabled: 1
+      colorId: 4
+      ballCount: 5
+    - enabled: 1
+      colorId: 3
+      ballCount: 6
+    - enabled: 0
+      colorId: 0
+      ballCount: 0
+    - enabled: 1
+      colorId: 0
+      ballCount: 5
+    - enabled: 1
+      colorId: 3
+      ballCount: 6
+  - cells:
+    - enabled: 1
+      colorId: 0
+      ballCount: 4
+    - enabled: 0
+      colorId: 0
+      ballCount: 0
+    - enabled: 1
+      colorId: 4
+      ballCount: 6
+    - enabled: 1
+      colorId: 0
+      ballCount: 7
+    - enabled: 1
+      colorId: 4
+      ballCount: 6
+    - enabled: 1
+      colorId: 2
+      ballCount: 7
+    - enabled: 1
+      colorId: 4
+      ballCount: 7
+  - cells:
+    - enabled: 1
+      colorId: 3
+      ballCount: 6
+    - enabled: 1
+      colorId: 3
+      ballCount: 6
+    - enabled: 1
+      colorId: 0
+      ballCount: 5
+    - enabled: 1
+      colorId: 0
+      ballCount: 6
+    - enabled: 1
+      colorId: 0
+      ballCount: 7
+    - enabled: 1
+      colorId: 0
+      ballCount: 6
+    - enabled: 1
+      colorId: 0
+      ballCount: 6
+  - cells:
+    - enabled: 1
+      colorId: 1
+      ballCount: 8
+    - enabled: 1
+      colorId: 0
+      ballCount: 4
+    - enabled: 1
+      colorId: 4
+      ballCount: 5
+    - enabled: 1
+      colorId: 4
+      ballCount: 7
+    - enabled: 1
+      colorId: 2
+      ballCount: 7
+    - enabled: 1
+      colorId: 1
+      ballCount: 8
+    - enabled: 1
+      colorId: 0
+      ballCount: 7
+  colorPalette:
+  - {r: 1, g: 0.14999998, b: 0.14999998, a: 1}
+  - {r: 0.14999998, g: 1, b: 1, a: 1}
+  - {r: 0.14999998, g: 0.14999998, b: 1, a: 1}
+  - {r: 0.575, g: 0.14999998, b: 1, a: 1}
+  - {r: 0.83000016, g: 0.14999998, b: 1, a: 1}
+  popAssets:
+  - {fileID: 21300000, guid: a727606cfb1ec4ca095fe3111e12cfd4, type: 3}
+  - {fileID: 21300000, guid: 0e0a73a965e6d4b10a91717435df476d, type: 3}
+  - {fileID: 21300000, guid: 90d4c316553248f99e7eb61732929c11, type: 3}
+  - {fileID: 21300000, guid: 8362110be4d54eb8b1cc4e912928ca70, type: 3}
+  - {fileID: 21300000, guid: d3774a66496874f13bf65bb114316047, type: 3}
+  trayAssets:
+  - {fileID: 21300000, guid: e6389ef92888c4f0080a3d06e9f1dab2, type: 3}
+  - {fileID: 21300000, guid: d46c36237ff064bedaa444b337ffed23, type: 3}
+  - {fileID: 21300000, guid: 7264a756332c48f996ef55fdb36f4345, type: 3}
+  - {fileID: 21300000, guid: 158a328846ff422caaaf5ce72bedf960, type: 3}
+  - {fileID: 21300000, guid: bc01627a2430d4efb8846a9b2762a533, type: 3}
+  trayCoverAssets:
+  - {fileID: 21300000, guid: c00ba6d79fdf3134b91bf956cc70c50a, type: 3}
+  - {fileID: 21300000, guid: 52ff779b1a8e9f34ca75fbc43b3966be, type: 3}
+  - {fileID: 21300000, guid: 2f2babb1f1274dab976c28e0e3e2aa0f, type: 3}
+  - {fileID: 21300000, guid: 94bbf416cc4f41ec8d9488d338188573, type: 3}
+  - {fileID: 21300000, guid: 0674ddbcbee2c584badc25d96e15aba5, type: 3}
+  holderAssets:
+  - {fileID: 21300000, guid: 6d32742f031b54855ba0b5d1e25ea25f, type: 3}
+  - {fileID: 21300000, guid: b3a6f70575aa44fce97f4ece5ecc19a3, type: 3}
+  - {fileID: 21300000, guid: 3fa3d9d21b7a4385aeb0aa36cda96d8d, type: 3}
+  - {fileID: 21300000, guid: 3016f504e1b2480bbc9c9caf8392819e, type: 3}
+  - {fileID: 21300000, guid: e262ea94af16e49bbbbbc544c463bef1, type: 3}
+  blockAssets:
+  - {fileID: 21300000, guid: 5626659ee9a014ea795c23fa0e23abc4, type: 3}
+  - {fileID: 21300000, guid: d09d19002f3e84f26b828622829c9d91, type: 3}
+  - {fileID: 21300000, guid: 284bd1ac3eb44aa19a6866f35a235eb3, type: 3}
+  - {fileID: 21300000, guid: 4cfdba24eccc4cd6beefcc0dd71d1ce5, type: 3}
+  - {fileID: 21300000, guid: 6c94b13a53c1c4a3c8674d4315695d75, type: 3}
+  pressedAssets:
+  - {fileID: 21300000, guid: 83f0f4761645049de8cedf267422690e, type: 3}
+  - {fileID: 21300000, guid: c76215d1e47c94576add03602d328d3a, type: 3}
+  - {fileID: 21300000, guid: c5ea8cb7baa2495181cbbed5e3899f1a, type: 3}
+  - {fileID: 21300000, guid: a2857127274b42649ff2fec993d92c5f, type: 3}
+  - {fileID: 21300000, guid: 2e8b7610b92e14344b2e851c7f093131, type: 3}
+  colorCount: 5
+  beltSpeed: 0.3
+  slotsPerTray: 3
+  beltSlotCount: 20
+  maxTrayColumnCount: 3
+  trayColumns:
+  - trays:
+    - colorId: 1
+      capacity: 3
+    - colorId: 1
+      capacity: 3
+    - colorId: 1
+      capacity: 3
+    - colorId: 3
+      capacity: 3
+    - colorId: 3
+      capacity: 3
+    - colorId: 3
+      capacity: 3
+    - colorId: 3
+      capacity: 3
+    - colorId: 0
+      capacity: 3
+    - colorId: 0
+      capacity: 3
+    - colorId: 0
+      capacity: 3
+    - colorId: 0
+      capacity: 3
+    - colorId: 0
+      capacity: 3
+    - colorId: 0
+      capacity: 3
+    - colorId: 0
+      capacity: 3
+    - colorId: 4
+      capacity: 3
+    - colorId: 4
+      capacity: 3
+    - colorId: 4
+      capacity: 3
+    - colorId: 4
+      capacity: 3
+    - colorId: 4
+      capacity: 3
+    - colorId: 4
+      capacity: 3
+    - colorId: 2
+      capacity: 3
+    - colorId: 2
+      capacity: 3
+    - colorId: 2
+      capacity: 3
+  - trays:
+    - colorId: 1
+      capacity: 3
+    - colorId: 1
+      capacity: 3
+    - colorId: 1
+      capacity: 3
+    - colorId: 3
+      capacity: 3
+    - colorId: 3
+      capacity: 3
+    - colorId: 3
+      capacity: 3
+    - colorId: 3
+      capacity: 3
+    - colorId: 0
+      capacity: 3
+    - colorId: 0
+      capacity: 3
+    - colorId: 0
+      capacity: 3
+    - colorId: 0
+      capacity: 3
+    - colorId: 0
+      capacity: 3
+    - colorId: 0
+      capacity: 3
+    - colorId: 0
+      capacity: 3
+    - colorId: 4
+      capacity: 3
+    - colorId: 4
+      capacity: 3
+    - colorId: 4
+      capacity: 3
+    - colorId: 4
+      capacity: 3
+    - colorId: 4
+      capacity: 3
+    - colorId: 4
+      capacity: 3
+    - colorId: 2
+      capacity: 3
+    - colorId: 2
+      capacity: 3
+  - trays:
+    - colorId: 1
+      capacity: 3
+    - colorId: 1
+      capacity: 3
+    - colorId: 3
+      capacity: 3
+    - colorId: 3
+      capacity: 3
+    - colorId: 3
+      capacity: 3
+    - colorId: 3
+      capacity: 3
+    - colorId: 0
+      capacity: 3
+    - colorId: 0
+      capacity: 3
+    - colorId: 0
+      capacity: 3
+    - colorId: 0
+      capacity: 3
+    - colorId: 0
+      capacity: 3
+    - colorId: 0
+      capacity: 3
+    - colorId: 0
+      capacity: 3
+    - colorId: 0
+      capacity: 3
+    - colorId: 4
+      capacity: 3
+    - colorId: 4
+      capacity: 3
+    - colorId: 4
+      capacity: 3
+    - colorId: 4
+      capacity: 3
+    - colorId: 4
+      capacity: 3
+    - colorId: 4
+      capacity: 3
+    - colorId: 2
+      capacity: 3
+    - colorId: 2
+      capacity: 3
+  difficultyParameters:
+    maxCanonicalConveyorPressure: 0.4
+    forcedReliefThreshold: 0.3
+    usefulBallUnlockDepth: 2
+    colourRepetition: 0.65
+    verticalColourClustering: 0.65
+  allowedStackSizes: 000000010101010100000000

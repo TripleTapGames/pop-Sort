@@ -3550,6 +3550,7 @@ MonoBehaviour:
   tapInputManager: {fileID: 1801561012}
   levelSequence:
   - {fileID: 11400000, guid: d2505f7057c3e6041995c163a1fd4c4b, type: 2}
+  - {fileID: 11400000, guid: d7fd8b965a7744375ac42c9afc8055a2, type: 2}
   - {fileID: 11400000, guid: ea096330ed67f0643b90a7b44fbaa640, type: 2}
   - {fileID: 11400000, guid: c26ffacb8d3991448a08fb1f2144f360, type: 2}
   - {fileID: 11400000, guid: 97200c51e856cc34bb785b8f46aee186, type: 2}
@@ -3574,6 +3575,16 @@ MonoBehaviour:
   - {fileID: 11400000, guid: e98a1a7ae20a2834b99bb2b54eaf41f7, type: 2}
   - {fileID: 11400000, guid: 84799647d4839834a9c0ffa1d61f67df, type: 2}
   - {fileID: 11400000, guid: ae13cd3dfa8fab840899ae6ec4d26d8e, type: 2}
+  - {fileID: 11400000, guid: 48bd8940f58a71e44a267deb12608b2e, type: 2}
+  - {fileID: 11400000, guid: 22ebfdd6302c28544b7d5203eea38b64, type: 2}
+  - {fileID: 11400000, guid: 6a4b0c3c3b78f0543aaedf1d263412ac, type: 2}
+  - {fileID: 11400000, guid: d599b5a81f3e6ac40a98ecce7bab2810, type: 2}
+  - {fileID: 11400000, guid: 49d0a1d022822d64fa945991744e7c34, type: 2}
+  - {fileID: 11400000, guid: 2de1ea6dca2ab2d47b00572d71e8cb13, type: 2}
+  - {fileID: 11400000, guid: e0c3cac9a4517ff42a33c84f7dd47a8b, type: 2}
+  - {fileID: 11400000, guid: 94b61c95df8f5f4438068bb200ed5174, type: 2}
+  - {fileID: 11400000, guid: 95022f82cf7ab0245952616fae7060b3, type: 2}
+  - {fileID: 11400000, guid: a2e518e7878e2fd45bd9ac499d1ef853, type: 2}
   targetFrameRate: 60
   resumeSavedProgress: 1
   levelNumber: 1

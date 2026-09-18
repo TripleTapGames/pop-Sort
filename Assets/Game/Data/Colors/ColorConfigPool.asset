@@ -69,3 +69,43 @@ MonoBehaviour:
     blockAsset: {fileID: 21300000, guid: 06ee50b4958d24bfd871248dd5fa2d7e, type: 3}
     pressedAsset: {fileID: 21300000, guid: 2c07d4e1e73ce459f9f58cce6a271f09, type: 3}
     trayCoverAsset: {fileID: 21300000, guid: 6a77328d186fb5d4e8271847604afa13, type: 3}
+  - id: 7
+    displayName: Cyan
+    popHolder: {fileID: 21300000, guid: 6e25e5abfe6e43a4a164b3c37b2f5a7d, type: 3}
+    popBalls: {fileID: 21300000, guid: d74a538e6266408aa50c4d499a96ad80, type: 3}
+    trayAsset: {fileID: 21300000, guid: bfd1cc54f5b249e38aa718c343dd3356, type: 3}
+    blockAsset: {fileID: 21300000, guid: 022d2ef1b5904cfd918c581354bd73fe, type: 3}
+    pressedAsset: {fileID: 21300000, guid: af88386808f1420f922ca37293b7858d, type: 3}
+    trayCoverAsset: {fileID: 21300000, guid: 7850575d620e43a2a6bc3ed8291a164d, type: 3}
+  - id: 8
+    displayName: Lime
+    popHolder: {fileID: 21300000, guid: 3fa3d9d21b7a4385aeb0aa36cda96d8d, type: 3}
+    popBalls: {fileID: 21300000, guid: 90d4c316553248f99e7eb61732929c11, type: 3}
+    trayAsset: {fileID: 21300000, guid: 7264a756332c48f996ef55fdb36f4345, type: 3}
+    blockAsset: {fileID: 21300000, guid: 284bd1ac3eb44aa19a6866f35a235eb3, type: 3}
+    pressedAsset: {fileID: 21300000, guid: c5ea8cb7baa2495181cbbed5e3899f1a, type: 3}
+    trayCoverAsset: {fileID: 21300000, guid: 2f2babb1f1274dab976c28e0e3e2aa0f, type: 3}
+  - id: 9
+    displayName: Deep Blue
+    popHolder: {fileID: 21300000, guid: 3016f504e1b2480bbc9c9caf8392819e, type: 3}
+    popBalls: {fileID: 21300000, guid: 8362110be4d54eb8b1cc4e912928ca70, type: 3}
+    trayAsset: {fileID: 21300000, guid: 158a328846ff422caaaf5ce72bedf960, type: 3}
+    blockAsset: {fileID: 21300000, guid: 4cfdba24eccc4cd6beefcc0dd71d1ce5, type: 3}
+    pressedAsset: {fileID: 21300000, guid: a2857127274b42649ff2fec993d92c5f, type: 3}
+    trayCoverAsset: {fileID: 21300000, guid: 94bbf416cc4f41ec8d9488d338188573, type: 3}
+  - id: 10
+    displayName: Magenta
+    popHolder: {fileID: 21300000, guid: 30ddaa63f4d74bd7a44bcda852b33056, type: 3}
+    popBalls: {fileID: 21300000, guid: cc38394432a54c489e2add57a46f46cd, type: 3}
+    trayAsset: {fileID: 21300000, guid: f878556c8a5e4e42b8b8928aad87f48a, type: 3}
+    blockAsset: {fileID: 21300000, guid: 991a27f3b8ef4e988f3261b5d780def2, type: 3}
+    pressedAsset: {fileID: 21300000, guid: b7129366d0c64b36bbb6b33bff85b3ac, type: 3}
+    trayCoverAsset: {fileID: 21300000, guid: 638f8b56b083425ca63ec48cb6448ebf, type: 3}
+  - id: 11
+    displayName: Ivory
+    popHolder: {fileID: 21300000, guid: 357346ee7a814b789aaaaf3324f4b106, type: 3}
+    popBalls: {fileID: 21300000, guid: 7039e14b0c304b4e87479c70536e56d3, type: 3}
+    trayAsset: {fileID: 21300000, guid: 6f253134dd7343c6a4f9665bf378ef33, type: 3}
+    blockAsset: {fileID: 21300000, guid: adb48d3f345b44a6ba498097592c86a7, type: 3}
+    pressedAsset: {fileID: 21300000, guid: 17f790c7885340cc91916eb5227537b2, type: 3}
+    trayCoverAsset: {fileID: 21300000, guid: ccd7342cfbf94b66971838c9999f55a8, type: 3}
