@@ -27,6 +27,7 @@ namespace PopSort
         public event Action<Ball> OnBallSeated;
 
         public int QueueCount => queue.Count + pendingBalls.Count + funnelWaitingBalls.Count;
+        public int BeltItemCount => queue.Count;
         public Transform FunnelExitPoint => funnelExitPoint;
 
         // Mirrors the existing overflow rule without changing its timer or state.

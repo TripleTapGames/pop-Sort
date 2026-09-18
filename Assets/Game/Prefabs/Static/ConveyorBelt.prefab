@@ -364,6 +364,8 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   beltQueueManager: {fileID: 0}
+  beltGlow: {fileID: 2411364473090291010}
+  glowFadeSpeed: 5
 --- !u!1 &5307390826650149902
 GameObject:
   m_ObjectHideFlags: 0
@@ -382,7 +384,7 @@ GameObject:
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
   m_StaticEditorFlags: 0
-  m_IsActive: 0
+  m_IsActive: 1
 --- !u!4 &482435662549308244
 Transform:
   m_ObjectHideFlags: 0
@@ -457,7 +459,7 @@ BoxCollider2D:
   m_PrefabInstance: {fileID: 0}
   m_PrefabAsset: {fileID: 0}
   m_GameObject: {fileID: 5307390826650149902}
-  m_Enabled: 1
+  m_Enabled: 0
   m_Density: 1
   m_Material: {fileID: 0}
   m_IncludeLayers:
