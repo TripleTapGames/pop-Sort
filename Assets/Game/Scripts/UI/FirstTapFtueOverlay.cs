@@ -8,6 +8,8 @@ namespace PopSort
     /// </summary>
     public class FirstTapFtueOverlay : MonoBehaviour
     {
+        [SerializeField] private Vector2 handOffset = new Vector2(0f, 60f);
+
         private RectTransform canvasRect;
         private RectTransform handRect;
         private Transform target;
@@ -69,7 +71,7 @@ namespace PopSort
             RectTransformUtility.ScreenPointToLocalPointInRectangle(canvasRect, screenPosition, null, out Vector2 targetPosition);
 
             float tapProgress = Mathf.Sin(animationTime * Mathf.PI * 1.5f) * 0.5f + 0.5f;
-            handRect.anchoredPosition = targetPosition + Vector2.down * (tapProgress * 26f);
+            handRect.anchoredPosition = targetPosition + handOffset + Vector2.down * (tapProgress * 26f);
             handRect.localScale = Vector3.one * Mathf.Lerp(0.94f, 1f, tapProgress);
         }
     }
