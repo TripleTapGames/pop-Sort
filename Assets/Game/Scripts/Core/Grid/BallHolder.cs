@@ -16,12 +16,17 @@ namespace PopSort
         [SerializeField, Min(0f)] private float releasePunchDuration = 0.1f;
         [SerializeField, Range(0f, 0.5f)] private float releasePunchStrength = 0.08f;
 
+        [Header("First Tap FTUE")]
+        [SerializeField, Min(0f)] private float ftuePulseScale = 0.12f;
+        [SerializeField, Min(0.01f)] private float ftuePulseDuration = 0.7f;
+
         private SpriteRenderer popHolderRenderer;
         private SpriteRenderer blocksRenderer;
         private SpriteRenderer pressedEffectRenderer;
         private bool isPressed;
         private Vector3 baseLocalScale;
         private Coroutine releaseFeedbackRoutine;
+        private Coroutine ftuePulseRoutine;
 
         public float ReleaseFeedbackDuration => releasePunchDuration > 0f && releasePunchStrength > 0f
             ? releasePunchDuration
@@ -40,6 +45,7 @@ namespace PopSort
 
             if (releaseFeedbackRoutine != null) StopCoroutine(releaseFeedbackRoutine);
             releaseFeedbackRoutine = null;
+            StopFtuePulse();
             transform.localScale = baseLocalScale;
             isPressed = false;
 
@@ -69,6 +75,7 @@ namespace PopSort
 
         public void SetPressed()
         {
+            StopFtuePulse();
             isPressed = true;
 
             SetStateObjects(false, false, true);
@@ -80,6 +87,43 @@ namespace PopSort
         {
             if (releaseFeedbackRoutine != null) StopCoroutine(releaseFeedbackRoutine);
             releaseFeedbackRoutine = StartCoroutine(ReleaseFeedbackRoutine());
+        }
+
+        public void SetFirstTapFtueVisible(bool isVisible)
+        {
+            if (!isVisible)
+            {
+                StopFtuePulse();
+                return;
+            }
+
+            if (isPressed || ftuePulseRoutine != null) return;
+            ftuePulseRoutine = StartCoroutine(FirstTapFtuePulseRoutine());
+        }
+
+        private void StopFtuePulse()
+        {
+            if (ftuePulseRoutine != null) StopCoroutine(ftuePulseRoutine);
+            ftuePulseRoutine = null;
+            transform.localScale = baseLocalScale;
+        }
+
+        private IEnumerator FirstTapFtuePulseRoutine()
+        {
+            while (true)
+            {
+                float elapsed = 0f;
+                while (elapsed < ftuePulseDuration)
+                {
+                    elapsed += Time.unscaledDeltaTime;
+                    float wave = Mathf.Sin(Mathf.Clamp01(elapsed / ftuePulseDuration) * Mathf.PI);
+                    transform.localScale = baseLocalScale * (1f + wave * ftuePulseScale);
+                    yield return null;
+                }
+
+                transform.localScale = baseLocalScale;
+                yield return null;
+            }
         }
 
         private void CacheStateRenderers()

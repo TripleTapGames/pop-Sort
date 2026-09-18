@@ -38,6 +38,7 @@ namespace PopSort
         private readonly List<Transform> holders = new List<Transform>();
         private readonly List<ParticleSystem> popRipples = new List<ParticleSystem>();
         private readonly Dictionary<int, int> unspawnedBallCounts = new Dictionary<int, int>();
+        private BallHolder ftueHolder;
         private bool hasLoggedMissingBallHolderPrefab;
 
         private void Start()
@@ -112,6 +113,7 @@ namespace PopSort
             groups.Clear();
             unspawnedBallCounts.Clear();
             AreAllHoldersPopped = false;
+            HideFirstTapFtue();
 
             foreach (Transform holder in holders)
             {
@@ -359,6 +361,37 @@ namespace PopSort
             }
         }
 
+        public void ShowFirstTappablePopFtue()
+        {
+            HideFirstTapFtue();
+
+            foreach (BallGroup group in groups)
+            {
+                if (group == null || group.IsPopping || HasBallBelowLogical(group)) continue;
+
+                ftueHolder = group.HolderDisplay;
+                ftueHolder?.SetFirstTapFtueVisible(true);
+                return;
+            }
+        }
+
+        public Transform GetFirstTappablePopHolderTransform()
+        {
+            foreach (BallGroup group in groups)
+            {
+                if (group == null || group.IsPopping || HasBallBelowLogical(group)) continue;
+                return group.HolderDisplay != null ? group.HolderDisplay.transform : null;
+            }
+
+            return null;
+        }
+
+        public void HideFirstTapFtue()
+        {
+            ftueHolder?.SetFirstTapFtueVisible(false);
+            ftueHolder = null;
+        }
+
         private void TrackUnspawnedBalls(int colorId, int count)
         {
             if (count <= 0) return;
@@ -417,6 +450,7 @@ namespace PopSort
             public int Y { get; }
             public bool IsPopping => popping;
             public Vector3 Position => holder != null ? holder.position : Vector3.zero;
+            public BallHolder HolderDisplay => holderDisplay;
 
             public static BallGroup Create(GridManager owner, int colorId, int x, int y)
             {

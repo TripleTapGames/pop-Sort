@@ -1,4 +1,5 @@
 using UnityEngine;
+using System;
 
 namespace PopSort
 {
@@ -7,12 +8,18 @@ namespace PopSort
         [SerializeField] private Camera mainCamera;
         [SerializeField] private GridManager gridManager;
 
+        public event Action OnPopTapped;
+        public Camera MainCamera => mainCamera;
+
         private void Update()
         {
             Vector2? tapWorldPos = GetTapWorldPosition();
             if (tapWorldPos == null) return;
 
-            gridManager?.TryPopHolderAtWorldPosition(tapWorldPos.Value);
+            if (gridManager != null && gridManager.TryPopHolderAtWorldPosition(tapWorldPos.Value))
+            {
+                OnPopTapped?.Invoke();
+            }
         }
 
         private Vector2? GetTapWorldPosition()

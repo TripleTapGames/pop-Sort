@@ -26,6 +26,8 @@ namespace PopSort
         [SerializeField] private int levelNumber = 1;
         [Header("Fast Finish")]
         [SerializeField, Range(1f, 4f)] private float fastFinishTimeScale = 2f;
+        [Header("First Tap FTUE")]
+        [SerializeField] private GameObject ftuePanel;
         [SerializeField] private GameWin gameWinPanel;
         [SerializeField] private GameLoose gameLoosePanel;
 
@@ -35,8 +37,10 @@ namespace PopSort
         public LevelData CurrentLevel { get; private set; }
 
         private const string SavedLevelIndexKey = "PopSort.SavedLevelIndex";
+        private const string FirstPopFtueSeenKey = "PopSort.FirstPopFtueSeen";
         private int configuredStartingLevelIndex;
         private bool isFastFinishActive;
+        private FirstTapFtueOverlay firstTapFtueOverlay;
 
         private void Awake()
         {
@@ -56,12 +60,16 @@ namespace PopSort
         {
             if (beltQueueManager != null) beltQueueManager.OnOverflow += HandleOverflow;
             if (gridManager != null) gridManager.OnGridCleared += HandleGridCleared;
+            if (tapInputManager != null) tapInputManager.OnPopTapped += HandleFirstPopTapped;
+            CreateFirstTapFtueOverlay();
         }
 
         private void OnDisable()
         {
             if (beltQueueManager != null) beltQueueManager.OnOverflow -= HandleOverflow;
             if (gridManager != null) gridManager.OnGridCleared -= HandleGridCleared;
+            if (tapInputManager != null) tapInputManager.OnPopTapped -= HandleFirstPopTapped;
+            firstTapFtueOverlay?.Hide();
             RestoreNormalTimeScale();
         }
 
@@ -156,6 +164,43 @@ namespace PopSort
             UpdateLevelNumberLabel();
             SaveProgress(sequenceIndex);
             if (tapInputManager != null) tapInputManager.enabled = true;
+            ShowFirstTapFtueIfNeeded();
+        }
+
+        private void HandleFirstPopTapped()
+        {
+            if (PlayerPrefs.HasKey(FirstPopFtueSeenKey)) return;
+
+            PlayerPrefs.SetInt(FirstPopFtueSeenKey, 1);
+            PlayerPrefs.Save();
+            gridManager?.HideFirstTapFtue();
+            firstTapFtueOverlay?.Hide();
+        }
+
+        private void CreateFirstTapFtueOverlay()
+        {
+            if (firstTapFtueOverlay == null)
+            {
+                if (ftuePanel == null)
+                {
+                    Debug.LogError("GameManager requires the FtuePanel scene object.", this);
+                    return;
+                }
+
+                firstTapFtueOverlay = ftuePanel.GetComponent<FirstTapFtueOverlay>();
+                if (firstTapFtueOverlay == null) firstTapFtueOverlay = ftuePanel.AddComponent<FirstTapFtueOverlay>();
+            }
+
+            firstTapFtueOverlay.gameObject.SetActive(false);
+        }
+
+        private void ShowFirstTapFtueIfNeeded()
+        {
+            if (PlayerPrefs.HasKey(FirstPopFtueSeenKey)) return;
+
+            gridManager?.ShowFirstTappablePopFtue();
+            Transform target = gridManager?.GetFirstTappablePopHolderTransform();
+            firstTapFtueOverlay?.Show(tapInputManager != null ? tapInputManager.MainCamera : null, target);
         }
 
         private void HandleGridCleared()
@@ -206,6 +251,7 @@ namespace PopSort
         public void ResetSavedProgress()
         {
             PlayerPrefs.DeleteKey(SavedLevelIndexKey);
+            PlayerPrefs.DeleteKey(FirstPopFtueSeenKey);
             PlayerPrefs.Save();
             LoadLevel(GetConfiguredStartingLevelIndex());
         }
