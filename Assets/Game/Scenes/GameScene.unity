@@ -344,7 +344,7 @@ MonoBehaviour:
   m_OnCullStateChanged:
     m_PersistentCalls:
       m_Calls: []
-  m_text: Tap a ball to pop it!
+  m_text: Tap to pop it
   m_isRightToLeft: 0
   m_fontAsset: {fileID: 11400000, guid: 729c88c597edb4e4cb063d8fa7b42ef6, type: 2}
   m_sharedMaterial: {fileID: 502093955541442733, guid: 729c88c597edb4e4cb063d8fa7b42ef6, type: 2}
@@ -514,7 +514,7 @@ MonoBehaviour:
   m_OnCullStateChanged:
     m_PersistentCalls:
       m_Calls: []
-  m_text: Tap a ball to pop it!
+  m_text: Tap to pop it
   m_isRightToLeft: 0
   m_fontAsset: {fileID: 11400000, guid: 729c88c597edb4e4cb063d8fa7b42ef6, type: 2}
   m_sharedMaterial: {fileID: 502093955541442733, guid: 729c88c597edb4e4cb063d8fa7b42ef6, type: 2}
@@ -1718,7 +1718,7 @@ MonoBehaviour:
   m_OnCullStateChanged:
     m_PersistentCalls:
       m_Calls: []
-  m_text: Pop the balls and fill the baskets with the matching colors!
+  m_text: Be careful! If the conveyor fills up fully, you lose the level.
   m_isRightToLeft: 0
   m_fontAsset: {fileID: 11400000, guid: 8f586378b4e144a9851e7b34d9b748ee, type: 2}
   m_sharedMaterial: {fileID: 2180264, guid: 8f586378b4e144a9851e7b34d9b748ee, type: 2}

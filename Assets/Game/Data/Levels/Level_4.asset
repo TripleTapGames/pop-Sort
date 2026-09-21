@@ -130,3 +130,4 @@ MonoBehaviour:
     usefulBallUnlockDepth: 1
     colourRepetition: 1
     verticalColourClustering: 1
+  allowedStackSizes: 

@@ -189,7 +189,7 @@ MonoBehaviour:
   - {fileID: 21300000, guid: 47cfbac975f7c4c5d850e58b7f4c5270, type: 3}
   - {fileID: 21300000, guid: 2c07d4e1e73ce459f9f58cce6a271f09, type: 3}
   colorCount: 5
-  beltSpeed: 0.3
+  beltSpeed: 0.2
   slotsPerTray: 3
   beltSlotCount: 20
   maxTrayColumnCount: 3
@@ -309,3 +309,4 @@ MonoBehaviour:
     usefulBallUnlockDepth: 4
     colourRepetition: 0.1
     verticalColourClustering: 0.1
+  allowedStackSizes: 

@@ -337,16 +337,16 @@ namespace PopSort
                 {
                     case FtueStep.Level1Tap:
                         target = gridManager.GetFirstTappablePopHolderTransform();
-                        instruction = "Tap a ball to pop it!";
+                        instruction = "Tap to pop it!";
                         break;
                     case FtueStep.Level2Green:
                         target = gridManager.GetTappablePopHolderTransformAt(0, CurrentLevel.Height - 1, Level2GreenColorId);
-                        instruction = "Tap the green ball!";
+                        instruction = "Tap to pop it!";
                         break;
                     case FtueStep.Level2Yellow:
                         target = gridManager.GetTappablePopHolderTransformAt(
                             CurrentLevel.Width - 1, CurrentLevel.Height - 1, Level2YellowColorId);
-                        instruction = "Tap the yellow ball!";
+                        instruction = "Tap to pop it!";
                         break;
                 }
             }

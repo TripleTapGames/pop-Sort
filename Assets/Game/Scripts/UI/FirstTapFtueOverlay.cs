@@ -160,7 +160,7 @@ namespace PopSort
 
             TMP_Text warningText = Instantiate(templateText, warningBubbleRect);
             warningText.gameObject.name = "Text";
-            warningText.text = "The conveyor can fill up!\nMatch colours to clear space\nor <color=#71F2FF>you'll lose the level!</color>";
+            warningText.text = "Be careful! If the conveyor fills up fully, you lose the level!";
             warningText.color = Color.white;
             warningText.richText = true;
             warningText.fontSizeMax = 45f;
