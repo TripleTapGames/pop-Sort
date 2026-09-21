@@ -71,6 +71,7 @@ namespace PopSort
         public Sprite[] holderAssets;
         public Sprite[] blockAssets;
         public Sprite[] pressedAssets;
+        public int[] colorConfigIds;
         public int colorCount = 4;
         public float beltSpeed = 0.2f;
         public int slotsPerTray = 3;

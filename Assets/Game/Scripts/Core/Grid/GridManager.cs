@@ -12,6 +12,7 @@ namespace PopSort
         [SerializeField] private BallHolder ballHolderPrefab;
         [SerializeField] private Transform gridOrigin;
         [SerializeField] private float cellSize = 1f;
+        [SerializeField, Range(0.5f, 1f)] private float rowSpacingMultiplier = 0.866f;
 
         [Header("Marble Pop Motion")]
         [SerializeField] private float burstVelocity = 1.5f;
@@ -89,7 +90,7 @@ namespace PopSort
 
             foreach (BallGroup group in groups)
             {
-                if (group == null || group.IsPopping || HasBallBelowLogical(group)) continue;
+                if (group == null || group.IsPopping) continue;
 
                 float sqrDistance = ((Vector2)group.Position - worldPosition).sqrMagnitude;
                 if (sqrDistance > tapRadius * tapRadius || sqrDistance >= closestSqrDistance) continue;
@@ -317,8 +318,9 @@ namespace PopSort
 
         private Vector3 CellToWorldPosition(int x, int y, int width, int height)
         {
-            float centeredX = (x - (width - 1) / 2f) * cellSize;
-            float centeredY = ((height - 1) / 2f - y) * cellSize;
+            float rowOffset = (y & 1) == 1 ? 0.5f : 0f;
+            float centeredX = (x + rowOffset - (width - 0.5f) / 2f) * cellSize;
+            float centeredY = ((height - 1) / 2f - y) * cellSize * rowSpacingMultiplier;
             return gridOrigin.position + new Vector3(centeredX, centeredY, 0f);
         }
 
@@ -373,7 +375,7 @@ namespace PopSort
 
             foreach (BallGroup group in groups)
             {
-                if (group == null || group.IsPopping || HasBallBelowLogical(group)) continue;
+                if (group == null || group.IsPopping) continue;
 
                 ftueHolder = group.HolderDisplay;
                 ftueHolder?.SetFirstTapFtueVisible(true);
@@ -385,7 +387,7 @@ namespace PopSort
         {
             foreach (BallGroup group in groups)
             {
-                if (group == null || group.IsPopping || HasBallBelowLogical(group)) continue;
+                if (group == null || group.IsPopping) continue;
                 return group.HolderDisplay != null ? group.HolderDisplay.transform : null;
             }
 
@@ -397,7 +399,7 @@ namespace PopSort
             foreach (BallGroup group in groups)
             {
                 if (group == null || group.X != x || group.Y != y || group.ColorId != colorId ||
-                    group.IsPopping || HasBallBelowLogical(group)) continue;
+                    group.IsPopping) continue;
 
                 return group.HolderDisplay != null ? group.HolderDisplay.transform : null;
             }
@@ -412,7 +414,7 @@ namespace PopSort
 
             foreach (BallGroup group in groups)
             {
-                if (group == null || group.IsPopping || HasBallBelowLogical(group) ||
+                if (group == null || group.IsPopping ||
                     group.HolderDisplay == null || group.HolderDisplay.transform != target) continue;
 
                 ftueTargetGroup = group;
@@ -455,22 +457,61 @@ namespace PopSort
         {
             foreach (BallGroup group in groups)
             {
-                bool tappable = !HasBallBelowLogical(group);
-                group.SetTappable(tappable);
+                group.SetTappable(!group.IsPopping);
             }
         }
 
-        // Grid-data based stacking check; avoids Physics2D raycasts, which aren't reliable
-        // against just-reactivated pooled colliders in the same frame a level (re)spawns.
-        private bool HasBallBelowLogical(BallGroup group)
+        private void ReleaseDisconnectedGroups()
         {
+            HashSet<BallGroup> connectedToCeiling = new HashSet<BallGroup>();
+            Queue<BallGroup> pending = new Queue<BallGroup>();
+
             foreach (BallGroup otherGroup in groups)
             {
-                if (otherGroup == null || otherGroup == group || otherGroup.IsPopping) continue;
-                if (otherGroup.X == group.X && otherGroup.Y > group.Y) return true;
+                if (otherGroup == null || otherGroup.IsPopping || otherGroup.Y != 0) continue;
+                connectedToCeiling.Add(otherGroup);
+                pending.Enqueue(otherGroup);
             }
 
-            return false;
+            while (pending.Count > 0)
+            {
+                BallGroup current = pending.Dequeue();
+                foreach (BallGroup candidate in groups)
+                {
+                    if (candidate == null || candidate.IsPopping || connectedToCeiling.Contains(candidate)) continue;
+                    if (!AreAdjacent(current, candidate)) continue;
+
+                    connectedToCeiling.Add(candidate);
+                    pending.Enqueue(candidate);
+                }
+            }
+
+            List<BallGroup> disconnected = new List<BallGroup>();
+            foreach (BallGroup group in groups)
+            {
+                if (group != null && !group.IsPopping && !connectedToCeiling.Contains(group))
+                {
+                    disconnected.Add(group);
+                }
+            }
+
+            foreach (BallGroup group in disconnected)
+            {
+                group.TryPopFromHolder(false);
+            }
+        }
+
+        private static bool AreAdjacent(BallGroup first, BallGroup second)
+        {
+            int deltaY = second.Y - first.Y;
+            int deltaX = second.X - first.X;
+            if (deltaY == 0) return Mathf.Abs(deltaX) == 1;
+            if (Mathf.Abs(deltaY) != 1) return false;
+
+            bool firstRowIsOffset = (first.Y & 1) == 1;
+            return firstRowIsOffset
+                ? deltaX == 0 || deltaX == 1
+                : deltaX == -1 || deltaX == 0;
         }
 
         private sealed class BallGroup
@@ -510,10 +551,9 @@ namespace PopSort
                 holderDisplay?.SetCount(totalCount);
             }
 
-            public void TryPopFromHolder()
+            public void TryPopFromHolder(bool releaseDisconnectedGroups = true)
             {
                 if (popping || holder == null) return;
-                if (owner.HasBallBelowLogical(this)) return;
 
                 popping = true;
                 Vector3 popPosition = holder.position;
@@ -546,6 +586,7 @@ namespace PopSort
                 }
                 remainingBalls = 0;
                 owner.RefreshGridBallSprites();
+                if (releaseDisconnectedGroups) owner.ReleaseDisconnectedGroups();
                 owner.NotifyGridClearedIfAllHoldersPopped();
             }
 

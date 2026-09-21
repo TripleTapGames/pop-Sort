@@ -183,6 +183,14 @@ namespace PopSort.EditorTools
                 EditorGUILayout.HelpBox("Create a Color Config Pool to add named colors.", MessageType.Info);
             }
 
+            using (new EditorGUI.DisabledScope(colorPool == null || levelData.colorCount == 0))
+            {
+                if (GUILayout.Button("Update Art Assets From Pool"))
+                {
+                    UpdateArtAssetsFromPool(colorPool);
+                }
+            }
+
             EnsurePaletteSize();
             EditorGUILayout.LabelField("Asset order: ball, tray, tray cover, tappable holder, blocked holder, pressed holder", EditorStyles.miniLabel);
 
@@ -284,8 +292,43 @@ namespace PopSort.EditorTools
             levelData.holderAssets[newColorId] = config.popHolder;
             levelData.blockAssets[newColorId] = config.blockAsset;
             levelData.pressedAssets[newColorId] = config.pressedAsset;
+            levelData.colorConfigIds[newColorId] = config.id;
             activeColorId = newColorId;
             EditorUtility.SetDirty(levelData);
+        }
+
+        private void UpdateArtAssetsFromPool(ColorConfigPool colorPool)
+        {
+            if (colorPool == null) return;
+
+            Undo.RecordObject(levelData, "Update Level Art Assets From Pool");
+            EnsurePaletteSize();
+            int updatedCount = 0;
+            int missingCount = 0;
+
+            for (int colorId = 0; colorId < levelData.colorCount; colorId++)
+            {
+                int configId = levelData.colorConfigIds[colorId];
+                if (!colorPool.TryGet(configId, out ColorConfig config))
+                {
+                    missingCount++;
+                    continue;
+                }
+
+                levelData.popAssets[colorId] = config.popBalls;
+                levelData.trayAssets[colorId] = config.trayAsset;
+                levelData.trayCoverAssets[colorId] = config.trayCoverAsset;
+                levelData.holderAssets[colorId] = config.popHolder;
+                levelData.blockAssets[colorId] = config.blockAsset;
+                levelData.pressedAssets[colorId] = config.pressedAsset;
+                updatedCount++;
+            }
+
+            EditorUtility.SetDirty(levelData);
+            AssetDatabase.SaveAssets();
+            string message = $"Updated {updatedCount} color slot(s) from {colorPool.name}.";
+            if (missingCount > 0) message += $" No matching pool entry was found for {missingCount} slot(s).";
+            EditorUtility.DisplayDialog("Art Assets Updated", message, "OK");
         }
 
         private static string[] GetColorNames(ColorConfigPool colorPool)
@@ -861,6 +904,18 @@ namespace PopSort.EditorTools
                 for (int i = 0; i < size && oldAssets != null && i < oldAssets.Length; i++)
                 {
                     levelData.pressedAssets[i] = oldAssets[i];
+                }
+            }
+
+            if (levelData.colorConfigIds == null || levelData.colorConfigIds.Length != size)
+            {
+                int[] oldConfigIds = levelData.colorConfigIds;
+                levelData.colorConfigIds = new int[size];
+                for (int i = 0; i < size; i++)
+                {
+                    levelData.colorConfigIds[i] = oldConfigIds != null && i < oldConfigIds.Length
+                        ? oldConfigIds[i]
+                        : i;
                 }
             }
 
