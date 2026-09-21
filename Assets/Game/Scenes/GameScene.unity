@@ -2189,9 +2189,9 @@ RectTransform:
   - {fileID: 734237311}
   m_Father: {fileID: 1406781166285464231}
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
-  m_AnchorMin: {x: 0.5, y: 0.5}
-  m_AnchorMax: {x: 0.5, y: 0.5}
-  m_AnchoredPosition: {x: -2.9417, y: -1085.6416}
+  m_AnchorMin: {x: 0.5, y: 0}
+  m_AnchorMax: {x: 0.5, y: 0}
+  m_AnchoredPosition: {x: -2.9417, y: 258.3584}
   m_SizeDelta: {x: 1052.9828, y: 337.083}
   m_Pivot: {x: 0.5, y: 0.5}
 --- !u!114 &897993657
@@ -3304,9 +3304,9 @@ RectTransform:
   - {fileID: 105419595}
   m_Father: {fileID: 2105467608}
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
-  m_AnchorMin: {x: 0.5, y: 0.5}
-  m_AnchorMax: {x: 0.5, y: 0.5}
-  m_AnchoredPosition: {x: -2.9417, y: -1085.6416}
+  m_AnchorMin: {x: 0.5, y: 0}
+  m_AnchorMax: {x: 0.5, y: 0}
+  m_AnchoredPosition: {x: -2.9417, y: 258.3584}
   m_SizeDelta: {x: 1052.9828, y: 337.083}
   m_Pivot: {x: 0.5, y: 0.5}
 --- !u!114 &1566393194
@@ -3613,6 +3613,12 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   mainCamera: {fileID: 519420031}
   gridManager: {fileID: 384712175}
+  recordingCursorSprite: {fileID: 21300000, guid: 52cc4880c4ea840b7a5697d1c57c6119, type: 3}
+  recordingCursorSize: 128
+  recordingCursorPivot: {x: 0.44, y: 0.74}
+  recordingCursorTapDuration: 0.16
+  recordingCursorTapScale: 0.86
+  recordingCursorTapTravel: 10
 --- !u!1 &1807186859
 GameObject:
   m_ObjectHideFlags: 0
@@ -4458,14 +4464,13 @@ MonoBehaviour:
   - {fileID: 11400000, guid: 2de1ea6dca2ab2d47b00572d71e8cb13, type: 2}
   - {fileID: 11400000, guid: e0c3cac9a4517ff42a33c84f7dd47a8b, type: 2}
   - {fileID: 11400000, guid: 94b61c95df8f5f4438068bb200ed5174, type: 2}
-  - {fileID: 11400000, guid: 95022f82cf7ab0245952616fae7060b3, type: 2}
-  - {fileID: 11400000, guid: a2e518e7878e2fd45bd9ac499d1ef853, type: 2}
   targetFrameRate: 60
-  resumeSavedProgress: 1
-  levelNumber: 1
+  resumeSavedProgress: 0
+  levelNumber: 29
   fastFinishTimeScale: 2
   ftueLevel1Panel: {fileID: 7740227796858695799}
   ftueLevel2Panel: {fileID: 640380695}
+  enableLevel2Ftue: 0
   gameWinPanel: {fileID: 1809894327}
   gameLoosePanel: {fileID: 2004173765}
   txt_levelNo: {fileID: 1437286311}
