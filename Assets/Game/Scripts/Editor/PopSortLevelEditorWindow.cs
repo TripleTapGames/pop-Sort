@@ -8,6 +8,7 @@ namespace PopSort.EditorTools
     {
         private const int CellSize = 24;
         private const string DefaultLevelFolder = "Assets/Game/Data/Levels";
+        private const string DescendingLevelFolder = "Assets/Game/Data/Levels/DescendingGrid";
 
         private LevelData levelData;
         private int gridWidth = 3;
@@ -17,11 +18,37 @@ namespace PopSort.EditorTools
         private int selectedCellX = -1;
         private int selectedCellY = -1;
         private Vector2 scrollPosition;
+        [SerializeField] private bool descendingGridWorkflow;
 
         [MenuItem("Tools/PopSort/Level Editor")]
         public static void Open()
         {
-            GetWindow<PopSortLevelEditorWindow>("PopSort Level Editor");
+            PopSortLevelEditorWindow window = GetWindow<PopSortLevelEditorWindow>();
+            window.SetWorkflow(false);
+        }
+
+        [MenuItem("Tools/PopSort/Descending Grid Level Editor")]
+        public static void OpenDescendingGridEditor()
+        {
+            PopSortLevelEditorWindow window = GetWindow<PopSortLevelEditorWindow>();
+            window.SetWorkflow(true);
+        }
+
+        private void OnEnable()
+        {
+            titleContent = new GUIContent(descendingGridWorkflow
+                ? "Descending Grid Editor"
+                : "PopSort Level Editor");
+        }
+
+        private void SetWorkflow(bool useDescendingGridWorkflow)
+        {
+            descendingGridWorkflow = useDescendingGridWorkflow;
+            titleContent = new GUIContent(useDescendingGridWorkflow
+                ? "Descending Grid Editor"
+                : "PopSort Level Editor");
+            Show();
+            Repaint();
         }
 
         private void OnGUI()
@@ -33,6 +60,13 @@ namespace PopSort.EditorTools
             {
                 EditorGUILayout.EndScrollView();
                 return;
+            }
+
+            if (descendingGridWorkflow && levelData.gameMode != LevelGameMode.DescendingGrid)
+            {
+                EditorGUILayout.HelpBox(
+                    "This asset is a Classic level. Create a new Descending Grid level or deliberately change its Game Mode in the standard Level Editor.",
+                    MessageType.Warning);
             }
 
             EditorGUILayout.Space(8f);
@@ -52,11 +86,23 @@ namespace PopSort.EditorTools
         private void DrawAssetSection()
         {
             EditorGUILayout.LabelField("Level Asset", EditorStyles.boldLabel);
-            levelData = (LevelData)EditorGUILayout.ObjectField("Level Data", levelData, typeof(LevelData), false);
+            EditorGUI.BeginChangeCheck();
+            LevelData selectedLevel = (LevelData)EditorGUILayout.ObjectField("Level Data", levelData, typeof(LevelData), false);
+            if (EditorGUI.EndChangeCheck())
+            {
+                levelData = selectedLevel;
+                if (levelData != null)
+                {
+                    gridWidth = Mathf.Max(1, levelData.Width);
+                    gridHeight = Mathf.Max(1, levelData.Height);
+                    selectedCellX = -1;
+                    selectedCellY = -1;
+                }
+            }
 
             using (new EditorGUILayout.HorizontalScope())
             {
-                if (GUILayout.Button("Create New Level"))
+                if (GUILayout.Button(descendingGridWorkflow ? "Create New Descending Level" : "Create New Level"))
                 {
                     CreateNewLevelAsset();
                 }
@@ -75,6 +121,29 @@ namespace PopSort.EditorTools
         {
             EditorGUILayout.LabelField("Difficulty", EditorStyles.boldLabel);
             Undo.RecordObject(levelData, "Edit Level Difficulty");
+
+            if (descendingGridWorkflow)
+            {
+                using (new EditorGUI.DisabledScope(true))
+                {
+                    EditorGUILayout.EnumPopup("Game Mode", levelData.gameMode);
+                }
+
+                EditorGUILayout.HelpBox(
+                    "Each successful holder tap moves every remaining holder down by one grid row. Reaching the scene's Danger Line ends the level after the configured delay.",
+                    MessageType.Info);
+            }
+            else
+            {
+                EditorGUI.BeginChangeCheck();
+                LevelGameMode newGameMode = (LevelGameMode)EditorGUILayout.EnumPopup("Game Mode", levelData.gameMode);
+                if (EditorGUI.EndChangeCheck())
+                {
+                    Undo.RecordObject(levelData, "Change Level Game Mode");
+                    levelData.gameMode = newGameMode;
+                    EditorUtility.SetDirty(levelData);
+                }
+            }
 
             EditorGUI.BeginChangeCheck();
             LevelDifficulty newDifficulty = (LevelDifficulty)EditorGUILayout.EnumPopup("Difficulty", levelData.difficulty);
@@ -361,8 +430,11 @@ namespace PopSort.EditorTools
         {
             EditorGUILayout.LabelField("Grid Painter", EditorStyles.boldLabel);
 
-            gridWidth = Mathf.Max(1, EditorGUILayout.IntField("Width", gridWidth));
-            gridHeight = Mathf.Max(1, EditorGUILayout.IntField("Height", gridHeight));
+            gridWidth = Mathf.Max(1, EditorGUILayout.IntField("Columns", gridWidth));
+            gridHeight = Mathf.Max(1, EditorGUILayout.IntField("Rows", gridHeight));
+            EditorGUILayout.LabelField(
+                "Choose any positive row and column count. Cells may be painted or cleared in any pattern.",
+                EditorStyles.miniLabel);
 
             using (new EditorGUILayout.HorizontalScope())
             {
@@ -385,6 +457,11 @@ namespace PopSort.EditorTools
                 {
                     MirrorGridHorizontal();
                 }
+
+                if (descendingGridWorkflow && GUILayout.Button("Pack To Top"))
+                {
+                    PackGridToTop();
+                }
             }
 
             if (levelData.rows == null || levelData.rows.Length == 0)
@@ -394,10 +471,25 @@ namespace PopSort.EditorTools
 
             DrawBallCountSection();
 
-            for (int y = 0; y < levelData.Height; y++)
+            if (descendingGridWorkflow)
             {
+                EditorGUILayout.LabelField(
+                    "Row 0 spawns at Grid Origin. Each following row spawns above it. Left-click paints; right-click clears.",
+                    EditorStyles.miniLabel);
+            }
+
+            for (int displayRow = 0; displayRow < levelData.Height; displayRow++)
+            {
+                // Descending-grid assets are drawn like their world layout: the
+                // highest indexed row at the top and origin row 0 at the bottom.
+                int y = descendingGridWorkflow ? levelData.Height - 1 - displayRow : displayRow;
                 using (new EditorGUILayout.HorizontalScope())
                 {
+                    if (descendingGridWorkflow)
+                    {
+                        GUILayout.Label($"R{y}", EditorStyles.miniLabel, GUILayout.Width(24f));
+                    }
+
                     for (int x = 0; x < levelData.Width; x++)
                     {
                         DrawGridCell(x, y);
@@ -532,10 +624,13 @@ namespace PopSort.EditorTools
         private void CreateNewLevelAsset()
         {
             EnsureFolder("Assets/Game/Data");
-            EnsureFolder(DefaultLevelFolder);
+            string levelFolder = descendingGridWorkflow ? DescendingLevelFolder : DefaultLevelFolder;
+            EnsureFolder(levelFolder);
 
             LevelData newLevel = CreateInstance<LevelData>();
-            string path = AssetDatabase.GenerateUniqueAssetPath($"{DefaultLevelFolder}/Level_New.asset");
+            newLevel.gameMode = descendingGridWorkflow ? LevelGameMode.DescendingGrid : LevelGameMode.Classic;
+            string fileName = descendingGridWorkflow ? "Descending_Level_New.asset" : "Level_New.asset";
+            string path = AssetDatabase.GenerateUniqueAssetPath($"{levelFolder}/{fileName}");
             AssetDatabase.CreateAsset(newLevel, path);
             AssetDatabase.SaveAssets();
             AssetDatabase.Refresh();
@@ -820,6 +915,27 @@ namespace PopSort.EditorTools
                 {
                     int oppositeX = levelData.Width - 1 - x;
                     levelData.rows[y].cells[oppositeX] = levelData.rows[y].cells[x];
+                }
+            }
+
+            EditorUtility.SetDirty(levelData);
+        }
+
+        private void PackGridToTop()
+        {
+            Undo.RecordObject(levelData, "Pack Descending Grid To Top");
+            for (int x = 0; x < levelData.Width; x++)
+            {
+                List<GridCell> enabledCells = new List<GridCell>();
+                for (int y = 0; y < levelData.Height; y++)
+                {
+                    GridCell cell = levelData.rows[y].cells[x];
+                    if (cell.enabled) enabledCells.Add(cell);
+                }
+
+                for (int y = 0; y < levelData.Height; y++)
+                {
+                    levelData.rows[y].cells[x] = y < enabledCells.Count ? enabledCells[y] : new GridCell();
                 }
             }
 

@@ -120,6 +120,19 @@ namespace PopSort.EditorTools
                 messages.Add(new LevelValidationMessage(LevelValidationSeverity.Error, "Grid has no enabled cells."));
             }
 
+            if (levelData.gameMode == LevelGameMode.DescendingGrid)
+            {
+                messages.Add(new LevelValidationMessage(
+                    LevelValidationSeverity.Info,
+                    $"Descending Grid layout: {levelData.Width} columns by {levelData.Height} rows. Empty cells and disconnected patterns are supported."));
+                messages.Add(new LevelValidationMessage(
+                    LevelValidationSeverity.Info,
+                    "Row 0 spawns at Grid Origin; rows with higher indices spawn upward from it."));
+                messages.Add(new LevelValidationMessage(
+                    LevelValidationSeverity.Info,
+                    "Danger-line position and game-over timing are configured in GameScene, not in this level asset."));
+            }
+
             int trayCapacity = Mathf.Max(levelData.slotsPerTray, 1);
             int totalGeneratedTrays = 0;
             for (int colorId = 0; colorId < ballCounts.Length; colorId++)

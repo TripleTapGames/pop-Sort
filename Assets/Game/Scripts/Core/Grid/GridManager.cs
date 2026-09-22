@@ -11,8 +11,12 @@ namespace PopSort
         [SerializeField] private BallPool ballPool;
         [SerializeField] private BallHolder ballHolderPrefab;
         [SerializeField] private Transform gridOrigin;
+        [SerializeField] private Transform dangerLine;
         [SerializeField] private float cellSize = 1f;
         [SerializeField, Range(0.5f, 1f)] private float rowSpacingMultiplier = 0.866f;
+
+        [Header("Danger Line")]
+        [SerializeField, Min(0f)] private float dangerLineCheckDelay = 0.25f;
 
         [Header("Marble Pop Motion")]
         [SerializeField] private float burstVelocity = 1.5f;
@@ -32,6 +36,7 @@ namespace PopSort
         [SerializeField, Min(0.01f)] private float popRippleScale = 0.7f;
 
         public event Action OnGridCleared;
+        public event Action OnDangerLineReached;
         public bool AreAllHoldersPopped { get; private set; }
         public bool HasUnspawnedBalls => unspawnedBallCounts.Count > 0;
 
@@ -42,6 +47,7 @@ namespace PopSort
         private readonly Dictionary<int, int> unspawnedBallCounts = new Dictionary<int, int>();
         private BallHolder ftueHolder;
         private BallGroup ftueTargetGroup;
+        private Coroutine dangerLineCheckRoutine;
         private bool holderTapsBlocked;
         private bool hasLoggedMissingBallHolderPrefab;
 
@@ -101,7 +107,13 @@ namespace PopSort
 
             if (closestGroup == null || (ftueTargetGroup != null && closestGroup != ftueTargetGroup)) return false;
 
-            closestGroup.TryPopFromHolder();
+            bool isDescendingGridMode = levelData != null && levelData.gameMode == LevelGameMode.DescendingGrid;
+            closestGroup.TryPopFromHolder(releaseDisconnectedGroups: !isDescendingGridMode);
+            if (isDescendingGridMode)
+            {
+                MoveGridDownOneStep();
+                QueueDangerLineCheck();
+            }
             return true;
         }
 
@@ -109,6 +121,7 @@ namespace PopSort
         {
             StopAllCoroutines();
             StopPopRipples();
+            dangerLineCheckRoutine = null;
 
             foreach (Ball ball in aliveBalls)
             {
@@ -318,10 +331,60 @@ namespace PopSort
 
         private Vector3 CellToWorldPosition(int x, int y, int width, int height)
         {
+            bool isDescendingGridMode = levelData != null && levelData.gameMode == LevelGameMode.DescendingGrid;
             float rowOffset = (y & 1) == 1 ? 0.5f : 0f;
-            float centeredX = (x + rowOffset - (width - 0.5f) / 2f) * cellSize;
-            float centeredY = ((height - 1) / 2f - y) * cellSize * rowSpacingMultiplier;
+            float centeredX = isDescendingGridMode
+                ? (x + rowOffset - (width - 1f) / 2f) * cellSize
+                : (x + rowOffset - (width - 0.5f) / 2f) * cellSize;
+            float centeredY = isDescendingGridMode
+                ? y * cellSize * rowSpacingMultiplier
+                : ((height - 1) / 2f - y) * cellSize * rowSpacingMultiplier;
             return gridOrigin.position + new Vector3(centeredX, centeredY, 0f);
+        }
+
+        private void MoveGridDownOneStep()
+        {
+            float step = cellSize * rowSpacingMultiplier;
+            foreach (BallGroup group in groups)
+            {
+                if (group == null || group.IsPopping || group.HolderDisplay == null) continue;
+                group.MoveDown(step);
+            }
+        }
+
+        private void CheckDangerLineReached()
+        {
+            if (dangerLine == null) return;
+
+            float dangerY = dangerLine.position.y;
+            float ballRadius = cellSize * 0.5f;
+            foreach (BallGroup group in groups)
+            {
+                if (group == null || group.IsPopping) continue;
+                if (group.Position.y - ballRadius <= dangerY)
+                {
+                    OnDangerLineReached?.Invoke();
+                    return;
+                }
+            }
+        }
+
+        private void QueueDangerLineCheck()
+        {
+            if (dangerLine == null) return;
+            if (dangerLineCheckRoutine != null) StopCoroutine(dangerLineCheckRoutine);
+            dangerLineCheckRoutine = StartCoroutine(CheckDangerLineReachedAfterDelay());
+        }
+
+        private IEnumerator CheckDangerLineReachedAfterDelay()
+        {
+            if (dangerLineCheckDelay > 0f)
+            {
+                yield return new WaitForSeconds(dangerLineCheckDelay);
+            }
+
+            dangerLineCheckRoutine = null;
+            CheckDangerLineReached();
         }
 
         private void RemoveHolder(Transform holder)
@@ -593,6 +656,11 @@ namespace PopSort
             public void SetTappable(bool tappable)
             {
                 holderDisplay?.SetTappable(tappable);
+            }
+
+            public void MoveDown(float distance)
+            {
+                if (holder != null) holder.position += Vector3.down * distance;
             }
         }
     }

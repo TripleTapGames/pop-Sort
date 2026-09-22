@@ -12,6 +12,12 @@ namespace PopSort
         SuperHard
     }
 
+    public enum LevelGameMode
+    {
+        Classic,
+        DescendingGrid
+    }
+
     [Serializable]
     public class DifficultyParameters
     {
@@ -62,6 +68,7 @@ namespace PopSort
         public const int MinStackSize = 1;
         public const int MaxStackSize = 12;
 
+        public LevelGameMode gameMode;
         public LevelDifficulty difficulty;
         public GridRow[] rows;
         public Color[] colorPalette;

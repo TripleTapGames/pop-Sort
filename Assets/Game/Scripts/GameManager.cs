@@ -25,6 +25,8 @@ namespace PopSort
         [Tooltip("Resume the last reached level when the game is launched.")]
         [SerializeField] private bool resumeSavedProgress = true;
         [SerializeField] private int levelNumber = 1;
+        [Header("Game Over")]
+        [SerializeField, Min(0f)] private float dangerLineGameOverDelay = 0.5f;
         [Header("Fast Finish")]
         [SerializeField, Range(1f, 4f)] private float fastFinishTimeScale = 2f;
         [Header("FTUE Panels")]
@@ -54,6 +56,7 @@ namespace PopSort
         private int tutorialBallsExpected;
         private int tutorialBallsSeated;
         private bool dismissWarningAtEndOfFrame;
+        private Coroutine dangerLineGameOverRoutine;
 
         private void Awake()
         {
@@ -74,6 +77,7 @@ namespace PopSort
             if (beltQueueManager != null) beltQueueManager.OnOverflow += HandleOverflow;
             if (beltQueueManager != null) beltQueueManager.OnBallSeated += HandleTutorialBallSeated;
             if (gridManager != null) gridManager.OnGridCleared += HandleGridCleared;
+            if (gridManager != null) gridManager.OnDangerLineReached += HandleDangerLineReached;
             if (tapInputManager != null) tapInputManager.OnPopTapped += HandleFtueTap;
             CreateFtueOverlays();
         }
@@ -83,7 +87,9 @@ namespace PopSort
             if (beltQueueManager != null) beltQueueManager.OnOverflow -= HandleOverflow;
             if (beltQueueManager != null) beltQueueManager.OnBallSeated -= HandleTutorialBallSeated;
             if (gridManager != null) gridManager.OnGridCleared -= HandleGridCleared;
+            if (gridManager != null) gridManager.OnDangerLineReached -= HandleDangerLineReached;
             if (tapInputManager != null) tapInputManager.OnPopTapped -= HandleFtueTap;
+            CancelPendingDangerLineGameOver();
             EndFtue();
             RestoreNormalTimeScale();
         }
@@ -96,6 +102,7 @@ namespace PopSort
         private void Update()
         {
             if (State != GameState.Playing) return;
+            if (dangerLineGameOverRoutine != null) return;
 
             if (activeFtueStep == FtueStep.Level2Warning)
             {
@@ -147,6 +154,7 @@ namespace PopSort
         {
             if (State != GameState.Playing) return;
 
+            CancelPendingDangerLineGameOver();
             State = GameState.Lost;
             EndFtue();
             RestoreNormalTimeScale();
@@ -155,6 +163,35 @@ namespace PopSort
             if (tapInputManager != null) tapInputManager.enabled = false;
             beltQueueManager?.SetBeltMoving(false);
             gameLoosePanel?.Show(() => LoadLevel(levelNumber - 1));
+        }
+
+        private void HandleDangerLineReached()
+        {
+            if (State != GameState.Playing || dangerLineGameOverRoutine != null) return;
+
+            // Stop further grid input immediately, then let the downward motion
+            // remain visible before presenting the failure state.
+            if (tapInputManager != null) tapInputManager.enabled = false;
+            dangerLineGameOverRoutine = StartCoroutine(HandleDangerLineGameOverAfterDelay());
+        }
+
+        private System.Collections.IEnumerator HandleDangerLineGameOverAfterDelay()
+        {
+            if (dangerLineGameOverDelay > 0f)
+            {
+                yield return new WaitForSecondsRealtime(dangerLineGameOverDelay);
+            }
+
+            dangerLineGameOverRoutine = null;
+            HandleOverflow();
+        }
+
+        private void CancelPendingDangerLineGameOver()
+        {
+            if (dangerLineGameOverRoutine == null) return;
+
+            StopCoroutine(dangerLineGameOverRoutine);
+            dangerLineGameOverRoutine = null;
         }
 
         private void LoadNextLevel()
@@ -181,6 +218,7 @@ namespace PopSort
 
         private void LoadLevel(int sequenceIndex)
         {
+            CancelPendingDangerLineGameOver();
             RestoreNormalTimeScale();
             if (levelSequence == null || sequenceIndex < 0 || sequenceIndex >= levelSequence.Length)
             {
