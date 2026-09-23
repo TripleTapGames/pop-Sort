@@ -127,6 +127,9 @@ namespace PopSort.EditorTools
                     $"Descending Grid layout: {levelData.Width} columns by {levelData.Height} rows. Empty cells and disconnected patterns are supported."));
                 messages.Add(new LevelValidationMessage(
                     LevelValidationSeverity.Info,
+                    "After a tap, every branch without an adjacency path to the highest configured row automatically releases and falls."));
+                messages.Add(new LevelValidationMessage(
+                    LevelValidationSeverity.Info,
                     "Row 0 spawns at Grid Origin; rows with higher indices spawn upward from it."));
                 messages.Add(new LevelValidationMessage(
                     LevelValidationSeverity.Info,

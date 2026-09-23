@@ -108,11 +108,19 @@ namespace PopSort
             if (closestGroup == null || (ftueTargetGroup != null && closestGroup != ftueTargetGroup)) return false;
 
             bool isDescendingGridMode = levelData != null && levelData.gameMode == LevelGameMode.DescendingGrid;
-            closestGroup.TryPopFromHolder(releaseDisconnectedGroups: !isDescendingGridMode);
+            closestGroup.TryPopFromHolder(releaseDisconnectedGroups: false);
             if (isDescendingGridMode)
             {
+                // Descending-grid rows are authored bottom-up, so the highest
+                // configured row is the support row. Drop every branch that no
+                // longer has an adjacency path back to it.
+                ReleaseDisconnectedGroups(Mathf.Max(0, levelData.Height - 1));
                 MoveGridDownOneStep();
                 QueueDangerLineCheck();
+            }
+            else
+            {
+                ReleaseDisconnectedGroups(0);
             }
             return true;
         }
@@ -524,15 +532,15 @@ namespace PopSort
             }
         }
 
-        private void ReleaseDisconnectedGroups()
+        private void ReleaseDisconnectedGroups(int supportRow)
         {
-            HashSet<BallGroup> connectedToCeiling = new HashSet<BallGroup>();
+            HashSet<BallGroup> supportedGroups = new HashSet<BallGroup>();
             Queue<BallGroup> pending = new Queue<BallGroup>();
 
             foreach (BallGroup otherGroup in groups)
             {
-                if (otherGroup == null || otherGroup.IsPopping || otherGroup.Y != 0) continue;
-                connectedToCeiling.Add(otherGroup);
+                if (otherGroup == null || otherGroup.IsPopping || otherGroup.Y != supportRow) continue;
+                supportedGroups.Add(otherGroup);
                 pending.Enqueue(otherGroup);
             }
 
@@ -541,10 +549,10 @@ namespace PopSort
                 BallGroup current = pending.Dequeue();
                 foreach (BallGroup candidate in groups)
                 {
-                    if (candidate == null || candidate.IsPopping || connectedToCeiling.Contains(candidate)) continue;
+                    if (candidate == null || candidate.IsPopping || supportedGroups.Contains(candidate)) continue;
                     if (!AreAdjacent(current, candidate)) continue;
 
-                    connectedToCeiling.Add(candidate);
+                    supportedGroups.Add(candidate);
                     pending.Enqueue(candidate);
                 }
             }
@@ -552,7 +560,7 @@ namespace PopSort
             List<BallGroup> disconnected = new List<BallGroup>();
             foreach (BallGroup group in groups)
             {
-                if (group != null && !group.IsPopping && !connectedToCeiling.Contains(group))
+                if (group != null && !group.IsPopping && !supportedGroups.Contains(group))
                 {
                     disconnected.Add(group);
                 }
@@ -649,7 +657,7 @@ namespace PopSort
                 }
                 remainingBalls = 0;
                 owner.RefreshGridBallSprites();
-                if (releaseDisconnectedGroups) owner.ReleaseDisconnectedGroups();
+                if (releaseDisconnectedGroups) owner.ReleaseDisconnectedGroups(0);
                 owner.NotifyGridClearedIfAllHoldersPopped();
             }
 

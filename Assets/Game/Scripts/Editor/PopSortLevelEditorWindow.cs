@@ -7,8 +7,8 @@ namespace PopSort.EditorTools
     public class PopSortLevelEditorWindow : EditorWindow
     {
         private const int CellSize = 24;
-        private const string DefaultLevelFolder = "Assets/Game/Data/Levels";
-        private const string DescendingLevelFolder = "Assets/Game/Data/Levels/DescendingGrid";
+        private const string DefaultLevelFolder = "Assets/Game/Data/PopsortLevels";
+        private const string DescendingLevelFolder = "Assets/Game/Data/BubbleBreakerLevels";
 
         private LevelData levelData;
         private int gridWidth = 3;
@@ -482,12 +482,18 @@ namespace PopSort.EditorTools
             {
                 // Descending-grid assets are drawn like their world layout: the
                 // highest indexed row at the top and origin row 0 at the bottom.
-                int y = descendingGridWorkflow ? levelData.Height - 1 - displayRow : displayRow;
+                bool descendingLayout = levelData.gameMode == LevelGameMode.DescendingGrid;
+                int y = descendingLayout ? levelData.Height - 1 - displayRow : displayRow;
                 using (new EditorGUILayout.HorizontalScope())
                 {
                     if (descendingGridWorkflow)
                     {
                         GUILayout.Label($"R{y}", EditorStyles.miniLabel, GUILayout.Width(24f));
+                    }
+
+                    if (descendingLayout && (y & 1) == 1)
+                    {
+                        GUILayout.Space((CellSize + 4f) * 0.5f);
                     }
 
                     for (int x = 0; x < levelData.Width; x++)
@@ -708,6 +714,14 @@ namespace PopSort.EditorTools
                 return;
             }
 
+            if (levelData.gameMode == LevelGameMode.DescendingGrid)
+            {
+                GenerateDescendingPattern();
+                levelData.GenerateTrayColumnsFromGrid();
+                EditorUtility.SetDirty(levelData);
+                return;
+            }
+
             int totalCells = gridWidth * gridHeight;
             int colorCount = Mathf.Max(levelData.colorCount, 1);
             int trayCapacity = Mathf.Max(levelData.slotsPerTray, 1);
@@ -763,6 +777,50 @@ namespace PopSort.EditorTools
 
             levelData.GenerateTrayColumnsFromGrid();
             EditorUtility.SetDirty(levelData);
+        }
+
+        private void GenerateDescendingPattern()
+        {
+            // Grow a random connected shape from the support row. Empty cells
+            // stay empty, while every generated branch has a path to the top.
+            ClearGrid();
+            int totalCells = gridWidth * gridHeight;
+            int targetCount = totalCells == 1 ? 1 : Mathf.Clamp(
+                Mathf.RoundToInt(totalCells * Random.Range(0.55f, 0.8f)), 1, totalCells - 1);
+            List<int> stackSizes = GetAllowedStackSizesForGeneration();
+            List<Vector2Int> frontier = new List<Vector2Int>();
+            HashSet<Vector2Int> discovered = new HashSet<Vector2Int>();
+            Vector2Int seed = new Vector2Int(Random.Range(0, gridWidth), gridHeight - 1);
+            frontier.Add(seed);
+            discovered.Add(seed);
+
+            for (int count = 0; count < targetCount && frontier.Count > 0; count++)
+            {
+                int index = Random.Range(0, frontier.Count);
+                Vector2Int cell = frontier[index];
+                frontier.RemoveAt(index);
+                levelData.rows[cell.y].cells[cell.x] = new GridCell
+                {
+                    enabled = true,
+                    colorId = Random.Range(0, levelData.colorCount),
+                    ballCount = stackSizes[Random.Range(0, stackSizes.Count)]
+                };
+
+                AddPatternFrontier(cell.x - 1, cell.y, frontier, discovered);
+                AddPatternFrontier(cell.x + 1, cell.y, frontier, discovered);
+                int diagonalOffset = (cell.y & 1) == 1 ? 1 : -1;
+                AddPatternFrontier(cell.x, cell.y - 1, frontier, discovered);
+                AddPatternFrontier(cell.x + diagonalOffset, cell.y - 1, frontier, discovered);
+                AddPatternFrontier(cell.x, cell.y + 1, frontier, discovered);
+                AddPatternFrontier(cell.x + diagonalOffset, cell.y + 1, frontier, discovered);
+            }
+        }
+
+        private void AddPatternFrontier(int x, int y, List<Vector2Int> frontier, HashSet<Vector2Int> discovered)
+        {
+            if (x < 0 || x >= gridWidth || y < 0 || y >= gridHeight) return;
+            Vector2Int cell = new Vector2Int(x, y);
+            if (discovered.Add(cell)) frontier.Add(cell);
         }
 
         private static int GetMaxBallCount(LevelDifficulty difficulty)
