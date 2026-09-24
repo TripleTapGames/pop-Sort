@@ -1,5 +1,33 @@
 {
   "dependencies": {
+    "com.applovin.mediation.adapters.facebook.android": {
+      "version": "6220000.0.0",
+      "depth": 0,
+      "source": "registry",
+      "dependencies": {},
+      "url": "https://unity.packages.applovin.com"
+    },
+    "com.applovin.mediation.adapters.facebook.ios": {
+      "version": "6210100.0.0",
+      "depth": 0,
+      "source": "registry",
+      "dependencies": {},
+      "url": "https://unity.packages.applovin.com"
+    },
+    "com.applovin.mediation.adapters.unityads.android": {
+      "version": "4200100.0.0",
+      "depth": 0,
+      "source": "registry",
+      "dependencies": {},
+      "url": "https://unity.packages.applovin.com"
+    },
+    "com.applovin.mediation.adapters.unityads.ios": {
+      "version": "4190000.0.0",
+      "depth": 0,
+      "source": "registry",
+      "dependencies": {},
+      "url": "https://unity.packages.applovin.com"
+    },
     "com.applovin.mediation.ads": {
       "version": "8.6.6",
       "depth": 0,

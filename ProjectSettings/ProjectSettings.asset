@@ -166,10 +166,11 @@ PlayerSettings:
   applicationIdentifier:
     Android: com.tripletapgames.popsortjam
     Standalone: com.DefaultCompany.PopSort
+    iPhone: com.tripletapgames.popsortjam
   buildNumber:
     Standalone: 0
     VisionOS: 0
-    iPhone: 0
+    iPhone: 1
     tvOS: 0
   overrideDefaultApplicationIdentifier: 1
   AndroidBundleVersionCode: 4
@@ -190,7 +191,7 @@ PlayerSettings:
   VertexChannelCompressionMask: 4054
   iPhoneSdkVersion: 988
   iOSSimulatorArchitecture: 0
-  iOSTargetOSVersionString: 12.0
+  iOSTargetOSVersionString: 15.0
   tvOSSdkVersion: 0
   tvOSSimulatorArchitecture: 0
   tvOSRequireExtendedGameController: 0

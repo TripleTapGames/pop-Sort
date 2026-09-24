@@ -3909,8 +3909,8 @@ MonoBehaviour:
   - {fileID: 11400000, guid: e0c3cac9a4517ff42a33c84f7dd47a8b, type: 2}
   - {fileID: 11400000, guid: 94b61c95df8f5f4438068bb200ed5174, type: 2}
   targetFrameRate: 60
-  resumeSavedProgress: 0
-  levelNumber: 29
+  resumeSavedProgress: 1
+  levelNumber: 1
   fastFinishTimeScale: 2
   ftueLevel1Panel: {fileID: 7740227796858695799}
   ftueLevel2Panel: {fileID: 640380695}

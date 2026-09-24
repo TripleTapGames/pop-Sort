@@ -12,5 +12,9 @@ namespace TripleTapSDK
 
         [Header("DefaultValue")]
           public int adsLevelStart_RemoteDefaultValue;
+
+        [Header("Interstitial Interval")]
+        public string interstitialInterval_RemoteConfigKey = "InterstitialAdIntervalSeconds";
+        [Min(0)] public int interstitialInterval_RemoteDefaultValue = 60;
     }
 }

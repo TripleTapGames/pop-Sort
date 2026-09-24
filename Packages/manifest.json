@@ -1,5 +1,9 @@
 {
   "dependencies": {
+    "com.applovin.mediation.adapters.facebook.android": "6220000.0.0",
+    "com.applovin.mediation.adapters.facebook.ios": "6210100.0.0",
+    "com.applovin.mediation.adapters.unityads.android": "4200100.0.0",
+    "com.applovin.mediation.adapters.unityads.ios": "4190000.0.0",
     "com.applovin.mediation.ads": "8.6.6",
     "com.coffee.ui-particle": "https://github.com/mob-sakai/ParticleEffectForUGUI.git",
     "com.coplaydev.unity-mcp": "https://github.com/CoplayDev/unity-mcp.git?path=/MCPForUnity#main",

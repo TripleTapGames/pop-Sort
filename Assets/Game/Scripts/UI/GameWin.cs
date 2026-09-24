@@ -16,6 +16,7 @@ public class GameWin : MonoBehaviour
 
     public void Show(Action onNext)
     {
+        SetNextButtonInteractable(true);
         SetVisible(true);
         if (animator != null)
         {
@@ -30,6 +31,11 @@ public class GameWin : MonoBehaviour
             nextButton.onClick.RemoveAllListeners();
             if (onNext != null) nextButton.onClick.AddListener(() => onNext());
         }
+    }
+
+    public void SetNextButtonInteractable(bool interactable)
+    {
+        if (nextButton != null) nextButton.interactable = interactable;
     }
 
     public void Hide()

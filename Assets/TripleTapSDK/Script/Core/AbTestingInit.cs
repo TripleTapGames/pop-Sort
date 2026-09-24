@@ -68,6 +68,16 @@ namespace TripleTapSDK
 
         PlayerPrefs.SetInt(remoteConfigKeys.adsLevelStart_RemoteConfigKey, adsConfigInt);
 
+        string intervalValue = GameAnalytics.GetRemoteConfigsValueAsString(
+            remoteConfigKeys.interstitialInterval_RemoteConfigKey,
+            remoteConfigKeys.interstitialInterval_RemoteDefaultValue.ToString());
+        if (!int.TryParse((intervalValue ?? string.Empty).Trim(), out int intervalSeconds) || intervalSeconds < 0)
+        {
+            intervalSeconds = Mathf.Max(0, remoteConfigKeys.interstitialInterval_RemoteDefaultValue);
+        }
+        PlayerPrefs.SetInt(remoteConfigKeys.interstitialInterval_RemoteConfigKey, intervalSeconds);
+        PlayerPrefs.Save();
+
         OnRemoteConfigsReady?.Invoke();
     }
 
@@ -79,6 +89,12 @@ namespace TripleTapSDK
     void SetDefaultValue()
     {
         Debug.Log("SetDefaultValue called");
+
+        if (!PlayerPrefs.HasKey(remoteConfigKeys.interstitialInterval_RemoteConfigKey))
+        {
+            PlayerPrefs.SetInt(remoteConfigKeys.interstitialInterval_RemoteConfigKey,
+                Mathf.Max(0, remoteConfigKeys.interstitialInterval_RemoteDefaultValue));
+        }
 
         if (!PlayerPrefs.HasKey(remoteConfigKeys.adsLevelStart_RemoteConfigKey))
         {

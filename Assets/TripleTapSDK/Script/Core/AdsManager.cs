@@ -1,6 +1,5 @@
 using System;
 using AppLovinMax;
-// using KnitFlow.Scripts.Gameplay.Managers;
 using UnityEngine;
 
 namespace TripleTapSDK
@@ -10,6 +9,9 @@ namespace TripleTapSDK
         [SerializeField] private TTAdsService adsSetupService;
         public bool IsInitialized { get; private set; }
         private TTAdLocation _currentAdLocation;
+        private TTAdLocation interstitialLocation;
+        private bool interstitialInFlight;
+        private double lastAdCooldownResetTime = double.NegativeInfinity;
         public event System.Action<TTAdLocation, bool> OnRewardedCompleted = delegate { };
         public event System.Action<TTAdLocation, bool> OnInterstitialCompleted = delegate { };
         public Action OnAdsInitialized = delegate { };
@@ -54,13 +56,10 @@ namespace TripleTapSDK
 
         public void RewardedCompleted(bool isSuccess)
         {
+            // Reset before notifying gameplay, which may immediately check ad availability.
+            if (isSuccess) lastAdCooldownResetTime = Time.realtimeSinceStartupAsDouble;
             OnRewardedCompleted?.Invoke(_currentAdLocation, isSuccess);
             Debug.Log("RewardedCompleted called with isSuccess: " + isSuccess);
-
-            if (isSuccess)
-            {
-                // Start/reset cooldown after a successful rewarded ad
-            }
         }
 
         public bool IsRewardedAdAvailable()
@@ -68,42 +67,52 @@ namespace TripleTapSDK
             return adsSetupService.IsRewardedAdAvailable();
         }
 
-        public bool IsInterstitialAdAvailable()
+        public bool IsInterstitialAdAvailable(int progressionLevelNumber)
         {
-            // Check level gating
-                    // var levelManager = AudioManager.Instance?.levelProgressionManager;
-                    // if (remoteConfigKeys != null && levelManager != null)
-                    // {
-                    //     int requiredLevel = PlayerPrefs.GetInt(
-                    //         remoteConfigKeys.adsLevelStart_RemoteConfigKey, 
-                    //         remoteConfigKeys.adsLevelStart_RemoteDefaultValue);
+            if (!IsInitialized || adsSetupService == null || remoteConfigKeys == null || progressionLevelNumber < 1)
+            {
+                return false;
+            }
 
+            int requiredLevel = PlayerPrefs.GetInt(
+                remoteConfigKeys.adsLevelStart_RemoteConfigKey,
+                remoteConfigKeys.adsLevelStart_RemoteDefaultValue);
 
-                    //         Debug.Log($"Checking interstitial availability: Player level {levelManager.DisplayLevelNumber}, Required level {requiredLevel}");
+            return progressionLevelNumber >= requiredLevel && CanShowInterstitialNow();
+        }
 
-                    //     if (requiredLevel > levelManager.DisplayLevelNumber)
-                    //     {
-                    //         return false;
-                    //     }
-                    // }
+        private bool CanShowInterstitialNow()
+        {
+            if (!IsInitialized || adsSetupService == null || remoteConfigKeys == null || interstitialInFlight)
+                return false;
 
-                    // return adsSetupService.IsInterAvailable();
-            return false;
+            int intervalSeconds = Mathf.Max(0, PlayerPrefs.GetInt(
+                remoteConfigKeys.interstitialInterval_RemoteConfigKey,
+                remoteConfigKeys.interstitialInterval_RemoteDefaultValue));
+            return Time.realtimeSinceStartupAsDouble - lastAdCooldownResetTime >= intervalSeconds &&
+                adsSetupService.IsInterAvailable();
         }
 
         public void ShowInterstitial(TTAdLocation adLocation)
         {
-            _currentAdLocation = adLocation;
+            // Callers check progression eligibility; also enforce the interval
+            // here so repeated show requests cannot bypass the cooldown.
+            if (!CanShowInterstitialNow())
+            {
+                OnInterstitialCompleted?.Invoke(adLocation, false);
+                return;
+            }
+            interstitialLocation = adLocation;
+            interstitialInFlight = true;
             adsSetupService.ShowInterstitialAd();
         }
 
         public void InterstitialCompleted(bool isSuccess)
         {
-            OnInterstitialCompleted?.Invoke(_currentAdLocation, isSuccess);
-
-            if (isSuccess)
-            {
-            }
+            if (!interstitialInFlight) return;
+            interstitialInFlight = false;
+            if (isSuccess) lastAdCooldownResetTime = Time.realtimeSinceStartupAsDouble;
+            OnInterstitialCompleted?.Invoke(interstitialLocation, isSuccess);
         }
       
     }

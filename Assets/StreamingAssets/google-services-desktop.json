@@ -7,20 +7,22 @@
   "client": [
     {
       "client_info": {
-        "mobilesdk_app_id": "1:626083959601:android:2cea003c8dfebb49175610",
+        "mobilesdk_app_id": "1:626083959601:ios:c632cbc35c7a8e49175610",
         "android_client_info": {
           "package_name": "com.tripletapgames.popsortjam"
         }
       },
-      "oauth_client": [],
       "api_key": [
         {
-          "current_key": "AIzaSyB-3UWNRy05Avs1_oJHWO2GJGjW-wAWJ0M"
+          "current_key": "AIzaSyCcmJevFQeenZ-AszPfgIaXbM7gYcH9IcU"
         }
       ],
       "services": {
+        "analytics_service": {
+          "status": 0
+        },
         "appinvite_service": {
-          "other_platform_oauth_client": []
+          "status": 1
         }
       }
     }

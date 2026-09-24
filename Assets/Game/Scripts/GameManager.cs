@@ -37,8 +37,10 @@ namespace PopSort
 
         public GameState State { get; private set; } = GameState.Playing;
         public LevelData CurrentLevel { get; private set; }
+        public int ProgressionLevelNumber => analyticsLevelNumber;
 
         private const string SavedLevelIndexKey = "PopSort.SavedLevelIndex";
+        private const string SavedAnalyticsLevelNumberKey = "PopSort.AnalyticsLevelNumber";
         private const string FirstPopFtueSeenKey = "PopSort.FirstPopFtueSeen";
         private const string LegacyLevel2FtueSeenKey = "PopSort.Level2FtueSeen";
         private const string Level2ConveyorFtueSeenKey = "PopSort.Level2ConveyorFtueSeen";
@@ -47,6 +49,8 @@ namespace PopSort
         private enum FtueStep { None, Level1Tap, Level2Green, Level2Yellow, Level2WaitingForConveyor, Level2Warning }
 
         private int configuredStartingLevelIndex;
+        // Independent of the looping content index; retries retain this number.
+        private int analyticsLevelNumber;
         private bool isFastFinishActive;
         private FirstTapFtueOverlay level1FtueOverlay;
         private FirstTapFtueOverlay level2FtueOverlay;
@@ -54,6 +58,8 @@ namespace PopSort
         private int tutorialBallsExpected;
         private int tutorialBallsSeated;
         private bool dismissWarningAtEndOfFrame;
+        private TTAdsManager pendingNextLevelAdManager;
+        private bool waitingForNextLevelAd;
 
         private void Awake()
         {
@@ -66,7 +72,15 @@ namespace PopSort
 
         private void Start()
         {
-            LoadLevel(GetStartingLevelIndex());
+            int startingIndex = GetStartingLevelIndex();
+            int startingAnalyticsNumber = startingIndex + 1;
+            if (resumeSavedProgress && PlayerPrefs.HasKey(SavedLevelIndexKey) &&
+                IsValidLevelIndex(PlayerPrefs.GetInt(SavedLevelIndexKey)))
+            {
+                startingAnalyticsNumber = Mathf.Max(1,
+                    PlayerPrefs.GetInt(SavedAnalyticsLevelNumberKey, startingAnalyticsNumber));
+            }
+            LoadLevel(startingIndex, startingAnalyticsNumber);
         }
 
         private void OnEnable()
@@ -80,6 +94,7 @@ namespace PopSort
 
         private void OnDisable()
         {
+            ClearPendingNextLevelAd();
             if (beltQueueManager != null) beltQueueManager.OnOverflow -= HandleOverflow;
             if (beltQueueManager != null) beltQueueManager.OnBallSeated -= HandleTutorialBallSeated;
             if (gridManager != null) gridManager.OnGridCleared -= HandleGridCleared;
@@ -119,11 +134,11 @@ namespace PopSort
                 RestoreNormalTimeScale();
                 SfxManager.PlayLevelWon();
                 SaveNextLevelProgress();
-                TTManager.Instance?.GAService?.LogProgressionComplete($"level_{levelNumber}");
-                TTManager.Instance?.TTAnalyticsService?.LogMilestoneLevelCompleted(levelNumber);
+                TTManager.Instance?.GAService?.LogProgressionComplete($"level_{analyticsLevelNumber}");
+                TTManager.Instance?.TTAnalyticsService?.LogMilestoneLevelCompleted(analyticsLevelNumber);
                 if (tapInputManager != null) tapInputManager.enabled = false;
                 beltQueueManager?.SetBeltMoving(false);
-                gameWinPanel?.Show(LoadNextLevel);
+                gameWinPanel?.Show(HandleNextLevelPressed);
             }
         }
 
@@ -151,10 +166,48 @@ namespace PopSort
             EndFtue();
             RestoreNormalTimeScale();
             SfxManager.PlayLevelFailed();
-            TTManager.Instance?.GAService?.LogProgressionFail($"level_{levelNumber}");
+            TTManager.Instance?.GAService?.LogProgressionFail($"level_{analyticsLevelNumber}");
             if (tapInputManager != null) tapInputManager.enabled = false;
             beltQueueManager?.SetBeltMoving(false);
-            gameLoosePanel?.Show(() => LoadLevel(levelNumber - 1));
+            gameLoosePanel?.Show(() => LoadLevel(levelNumber - 1, analyticsLevelNumber));
+        }
+
+        private void HandleNextLevelPressed()
+        {
+            if (State != GameState.Won || waitingForNextLevelAd) return;
+
+            TTManager sdk = TTManager.Instance;
+            TTAdsManager adsManager = sdk != null ? sdk.AdsManager : null;
+            if (adsManager == null || !adsManager.IsInterstitialAdAvailable(ProgressionLevelNumber))
+            {
+                LoadNextLevel();
+                return;
+            }
+
+            waitingForNextLevelAd = true;
+            pendingNextLevelAdManager = adsManager;
+            if (gameWinPanel != null) gameWinPanel.SetNextButtonInteractable(false);
+            // Subscribe first: a rejected show can complete synchronously.
+            adsManager.OnInterstitialCompleted += HandleNextLevelAdCompleted;
+            adsManager.ShowInterstitial(TTAdLocation.LoadNextLevel);
+        }
+
+        private void HandleNextLevelAdCompleted(TTAdLocation location, bool isSuccess)
+        {
+            if (!waitingForNextLevelAd || location != TTAdLocation.LoadNextLevel) return;
+
+            ClearPendingNextLevelAd();
+            // Both closing the ad and a display failure allow progression.
+            if (isActiveAndEnabled && State == GameState.Won) LoadNextLevel();
+        }
+
+        private void ClearPendingNextLevelAd()
+        {
+            if (pendingNextLevelAdManager != null)
+                pendingNextLevelAdManager.OnInterstitialCompleted -= HandleNextLevelAdCompleted;
+            pendingNextLevelAdManager = null;
+            waitingForNextLevelAd = false;
+            if (gameWinPanel != null) gameWinPanel.SetNextButtonInteractable(true);
         }
 
         private void LoadNextLevel()
@@ -171,7 +224,7 @@ namespace PopSort
                 int candidateIndex = (levelNumber + offset) % levelSequence.Length;
                 if (levelSequence[candidateIndex] != null)
                 {
-                    LoadLevel(candidateIndex);
+                    LoadLevel(candidateIndex, analyticsLevelNumber + 1);
                     return;
                 }
             }
@@ -179,8 +232,9 @@ namespace PopSort
             Debug.LogError("Level sequence has no valid levels.", this);
         }
 
-        private void LoadLevel(int sequenceIndex)
+        private void LoadLevel(int sequenceIndex, int progressionNumber)
         {
+            ClearPendingNextLevelAd();
             RestoreNormalTimeScale();
             if (levelSequence == null || sequenceIndex < 0 || sequenceIndex >= levelSequence.Length)
             {
@@ -210,9 +264,10 @@ namespace PopSort
             beltQueueManager?.SetLevelData(nextLevel);
             gridManager?.SpawnGridFromLevelData(nextLevel);
             levelNumber = sequenceIndex + 1;
+            analyticsLevelNumber = progressionNumber;
             UpdateLevelNumberLabel();
-            SaveProgress(sequenceIndex);
-            TTManager.Instance?.GAService?.LogProgressionStart($"level_{levelNumber}");
+            SaveProgress(sequenceIndex, analyticsLevelNumber);
+            TTManager.Instance?.GAService?.LogProgressionStart($"level_{analyticsLevelNumber}");
             if (tapInputManager != null) tapInputManager.enabled = true;
             ShowFtueIfNeeded();
         }
@@ -433,11 +488,13 @@ namespace PopSort
         public void ResetSavedProgress()
         {
             PlayerPrefs.DeleteKey(SavedLevelIndexKey);
+            PlayerPrefs.DeleteKey(SavedAnalyticsLevelNumberKey);
             PlayerPrefs.DeleteKey(FirstPopFtueSeenKey);
             PlayerPrefs.DeleteKey(LegacyLevel2FtueSeenKey);
             PlayerPrefs.DeleteKey(Level2ConveyorFtueSeenKey);
             PlayerPrefs.Save();
-            LoadLevel(GetConfiguredStartingLevelIndex());
+            int startingIndex = GetConfiguredStartingLevelIndex();
+            LoadLevel(startingIndex, startingIndex + 1);
         }
 
         private int GetStartingLevelIndex()
@@ -478,17 +535,18 @@ namespace PopSort
                 int candidateIndex = ((levelNumber - 1) + offset) % levelSequence.Length;
                 if (IsValidLevelIndex(candidateIndex))
                 {
-                    SaveProgress(candidateIndex);
+                    SaveProgress(candidateIndex, analyticsLevelNumber + 1);
                     return;
                 }
             }
         }
 
-        private void SaveProgress(int sequenceIndex)
+        private void SaveProgress(int sequenceIndex, int progressionNumber)
         {
             if (!resumeSavedProgress || !IsValidLevelIndex(sequenceIndex)) return;
 
             PlayerPrefs.SetInt(SavedLevelIndexKey, sequenceIndex);
+            PlayerPrefs.SetInt(SavedAnalyticsLevelNumberKey, progressionNumber);
             PlayerPrefs.Save();
         }
     }
