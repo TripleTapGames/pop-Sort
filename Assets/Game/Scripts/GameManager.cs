@@ -478,7 +478,7 @@ namespace PopSort
 
         private void UpdateLevelNumberLabel()
         {
-            if (txt_levelNo != null) txt_levelNo.text = $"Level {levelNumber}";
+            if (txt_levelNo != null) txt_levelNo.text = $"Level {analyticsLevelNumber}";
         }
 
         /// <summary>
