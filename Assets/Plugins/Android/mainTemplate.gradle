@@ -8,6 +8,8 @@ dependencies {
     implementation 'com.android.support:cardview-v7:25.3.1' // Facebook.Unity.Editor.AndroidSupportLibraryResolver.addSupportLibraryDependency
     implementation 'com.android.support:customtabs:25.3.1' // Facebook.Unity.Editor.AndroidSupportLibraryResolver.addSupportLibraryDependency
     implementation 'com.android.support:support-v4:25.3.1' // Facebook.Unity.Editor.AndroidSupportLibraryResolver.addSupportLibraryDependency
+    implementation 'com.applovin.mediation:facebook-adapter:[6.19.0.2]' // Packages/com.applovin.mediation.adapters.facebook.android/Editor/Dependencies.xml:7
+    implementation 'com.applovin.mediation:unityads-adapter:4.19.0.0' // Packages/com.applovin.mediation.adapters.unityads.android/Editor/Dependencies.xml:4
     implementation 'com.applovin:applovin-sdk:13.6.4' // Packages/com.applovin.mediation.ads/AppLovin/Editor/Dependencies.xml:4
     implementation 'com.facebook.android:facebook-applinks:[17.0.0,18)' // Assets/FacebookSDK/Plugins/Editor/Dependencies.xml:6
     implementation 'com.facebook.android:facebook-core:[17.0.0,18)' // Assets/FacebookSDK/Plugins/Editor/Dependencies.xml:5
@@ -25,6 +27,7 @@ dependencies {
     implementation 'com.google.firebase:firebase-crashlytics-ndk:20.0.6' // Assets/Firebase/Editor/CrashlyticsDependencies.xml:16
     implementation 'com.google.firebase:firebase-crashlytics-unity:13.13.0' // Assets/Firebase/Editor/CrashlyticsDependencies.xml:23
     implementation 'com.parse.bolts:bolts-android:1.4.0' // Assets/FacebookSDK/Plugins/Editor/Dependencies.xml:4
+    implementation 'com.singular.sdk:singular_sdk:12.16.1' // Packages/singular-unity-package/SingularSDK/Editor/SingularSDKDependencies.xml:7
 // Android Resolver Dependencies End
 **DEPS**}
 

@@ -13,6 +13,6 @@ MonoBehaviour:
   m_Name: TTRemoteConfigKeys
   m_EditorClassIdentifier: Assembly-CSharp::TripleTapSDK.TTRemoteConfigKeys
   adsLevelStart_RemoteConfigKey: AdLevelStart
-  adsLevelStart_RemoteDefaultValue: 2
+  adsLevelStart_RemoteDefaultValue: 7
   interstitialInterval_RemoteConfigKey: InterstitialAdIntervalSeconds
   interstitialInterval_RemoteDefaultValue: 60

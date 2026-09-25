@@ -1,7 +1,7 @@
 {
   "dependencies": {
     "com.applovin.mediation.adapters.facebook.android": {
-      "version": "6220000.0.0",
+      "version": "6190002.0.0",
       "depth": 0,
       "source": "registry",
       "dependencies": {},
@@ -15,7 +15,7 @@
       "url": "https://unity.packages.applovin.com"
     },
     "com.applovin.mediation.adapters.unityads.android": {
-      "version": "4200100.0.0",
+      "version": "4190000.0.0",
       "depth": 0,
       "source": "registry",
       "dependencies": {},
@@ -406,6 +406,15 @@
         "com.unity.modules.jsonserialize": "1.0.0"
       },
       "url": "https://packages.unity.com"
+    },
+    "singular-unity-package": {
+      "version": "https://github.com/singular-labs/Singular-Unity-SDK.git",
+      "depth": 0,
+      "source": "git",
+      "dependencies": {
+        "com.unity.nuget.newtonsoft-json": "3.2.1"
+      },
+      "hash": "605c8024a4aebf523e544b13fece8145a9d1c69d"
     },
     "com.unity.modules.ai": {
       "version": "1.0.0",

@@ -2,7 +2,7 @@
 using System;
 using UnityEngine;
 using Facebook.Unity;
-// using Singular;
+using Singular;
 using Firebase.Analytics;
 
 namespace TripleTapSDK
@@ -55,7 +55,7 @@ namespace TripleTapSDK
                         try
                         {
                             string retentionEvent = $"day_{daysSinceFirstLogin}_retention";
-                            // SingularSDK.Event(retentionEvent);
+                            SingularSDK.Event(retentionEvent);
                             TTManager.Instance.GAService?.LogDesignEvent(retentionEvent);
                             FB.LogAppEvent(retentionEvent);
                             FirebaseAnalytics.LogEvent(retentionEvent);
@@ -85,7 +85,7 @@ namespace TripleTapSDK
                     {
                         try
                         {
-                            // SingularSDK.Event("day_0_retention");
+                            SingularSDK.Event("day_0_retention");
                             TTManager.Instance.GAService?.LogDesignEvent("day_0_retention");
                             FB.LogAppEvent("day_0_retention");
                             FirebaseAnalytics.LogEvent("day_0_retention");
@@ -152,8 +152,8 @@ namespace TripleTapSDK
                 TTManager.Instance.GAService?.LogAdRevenue(ad_format, (float)value);
 
                // Singular ad revenue
-                // var adData = new SingularAdData(ad_source, "USD", roundedValue);
-                // SingularSDK.AdRevenue(adData);
+                var adData = new SingularAdData(ad_source, "USD", value);
+                SingularSDK.AdRevenue(adData);
 
                   CheckAndFireRevenueThresholdEvents(adInfo.Revenue);
             }
@@ -251,7 +251,7 @@ namespace TripleTapSDK
                 PlayerPrefs.SetInt(key, 1);
                 PlayerPrefs.Save();
 
-                // SingularSDK.Event(eventId);
+                SingularSDK.Event(eventId);
 
                 FirebaseAnalytics.LogEvent(eventId);
             }

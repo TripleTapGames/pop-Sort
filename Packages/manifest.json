@@ -1,8 +1,8 @@
 {
   "dependencies": {
-    "com.applovin.mediation.adapters.facebook.android": "6220000.0.0",
+    "com.applovin.mediation.adapters.facebook.android": "6190002.0.0",
     "com.applovin.mediation.adapters.facebook.ios": "6210100.0.0",
-    "com.applovin.mediation.adapters.unityads.android": "4200100.0.0",
+    "com.applovin.mediation.adapters.unityads.android": "4190000.0.0",
     "com.applovin.mediation.adapters.unityads.ios": "4190000.0.0",
     "com.applovin.mediation.ads": "8.6.6",
     "com.coffee.ui-particle": "https://github.com/mob-sakai/ParticleEffectForUGUI.git",
@@ -21,6 +21,7 @@
     "com.unity.textmeshpro": "3.0.7",
     "com.unity.timeline": "1.7.7",
     "com.unity.visualscripting": "1.9.4",
+    "singular-unity-package": "https://github.com/singular-labs/Singular-Unity-SDK.git",
     "com.unity.modules.ai": "1.0.0",
     "com.unity.modules.androidjni": "1.0.0",
     "com.unity.modules.animation": "1.0.0",
